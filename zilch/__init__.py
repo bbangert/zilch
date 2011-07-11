@@ -150,7 +150,7 @@ class Collector(object):
         """
         if not self._zmq_socket:
             context = zmq.Context()
-            zero_socket = context.socket(zmq.PUSH)
+            zero_socket = context.socket(zmq.PULL)
             zero_socket.bind(self.zeromq_bind)
             self._zmq_socket = zero_socket
         return self._zmq_socket
@@ -178,8 +178,10 @@ class Collector(object):
                 data = simplejson.loads(message.decode('zlib'))
                 self.store.message_received(data)
                 messages = True
-            except zmq.ZMQError:
-                time.sleep(0.1)
+            except zmq.ZMQError, e:
+                if e.errno != zmq.EAGAIN:
+                    raise
+                time.sleep(0.2)
             now = time.time()
             if now - last_flush > 10 and messages:
                 self.store.flush()
