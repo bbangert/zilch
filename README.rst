@@ -2,17 +2,17 @@
 zilch
 =====
 
-``zilch`` is a small extensible ZeroMQ based reporting and collecting library
-for Python. This library is inspired by `David Cramer's Sentry
-<https://github.com/dcramer/sentry>`_, but aims to implement just the core
-features in a smaller code/feature footprint with additional functionality
-provided purely by additional extension packages.
+``zilch`` is a small extensible `ZeroMQ <zeromq.org>`_ based reporting and
+collecting library for Python. This library is inspired by `David Cramer's
+Sentry <https://github.com/dcramer/sentry>`_, but aims to implement just the
+core features in a smaller code/feature footprint with additional
+functionality provided purely by additional extension packages.
 
 
 Requirements
 ============
 
-* zeromq
+* `zeromq <zeromq.org>`_
 
 
 License

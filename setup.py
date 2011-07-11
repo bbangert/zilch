@@ -27,5 +27,10 @@ setup(name='zilch',
       tests_require = ['pkginfo', 'Mock>=0.7', 'nose'],
       install_requires=[
           "pyzmq>=2.1",
+          "simplejson>=2.1",
       ],
+      entry_points="""
+      [console_scripts]
+      zilch-collector = zilch.script:main
+      """
 )
