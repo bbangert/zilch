@@ -1,4 +1,4 @@
-"""Zilch Collector"""
+"""Zilch Recorder"""
 import time
 import signal
 
@@ -6,14 +6,14 @@ import simplejson
 import zmq
 
 
-class Collector(object):
-    """ZeroMQ Collector
+class Recorder(object):
+    """ZeroMQ Recorder
     
-    The Collector by itself has no methodology to store data recieved
+    The Recorder by itself has no methodology to record data recieved
     over ZeroMQ, a ``store`` instance should be provided that
     implements a ``message_received`` and ``flush`` method.
     
-    """    
+    """
     def __init__(self, zeromq_bind=None, store=None):
         self.zeromq_bind = zeromq_bind
         self.store = store
@@ -58,11 +58,11 @@ class Collector(object):
         The main_loop executes in a serial single-threaded fashion.
         
         """
-        print "Running zilch-collector on port: %s" % self.zeromq_bind
+        print "Running zilch-recorder on port: %s" % self.zeromq_bind
         messages = False
         now = time.time()
         last_flush = now
-                
+
         while 1:
             try:
                 message = self.sock.recv(flags=zmq.NOBLOCK)

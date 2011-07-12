@@ -1,10 +1,10 @@
 """ZeroMQ Client
 
 Before reporting exceptions or using the zilch Logger, the connection
-string for ZeroMQ that refers to the collector should be configured::
+string for ZeroMQ that refers to the recorder_host should be configured::
     
     import zilch.client
-    zilch.client.collector_host = "tcp://localhost:5555"
+    zilch.client.recorder_host = "tcp://localhost:5555"
 
 Exceptions can then be reported with capture_exception function::
     
@@ -17,6 +17,7 @@ Exceptions can then be reported with capture_exception function::
 """
 import datetime
 import logging
+import socket
 import sys
 import traceback
 import uuid
@@ -31,7 +32,7 @@ from zilch.utils import shorten
 from zilch.utils import transform
 
 
-collector_host = None
+recorder_host = None
 _zeromq_socket = None
 
 def get_socket():
@@ -41,18 +42,19 @@ def get_socket():
 
     """
     global _zeromq_socket
-    if not collector_host:
+    if not recorder_host:
         raise ConfigurationError("Collector host string not configured.")
     
     if not _zeromq_socket:
         context = zmq.Context()
         zero_socket = context.socket(zmq.PUSH)
-        zero_socket.connect(collector_host)
+        zero_socket.connect(recorder_host)
         _zeromq_socket = zero_socket
     return _zeromq_socket
 
 
 def send(**kwargs):
+    """Send a message over ZeroMQ"""
     data = simplejson.dumps(kwargs).encode('zlib')
     get_socket().send(data, flags=zmq.NOBLOCK)
 
@@ -82,21 +84,37 @@ def capture_exception(exc_info=None, level=logging.ERROR):
     return capture('Exception', data=data)
 
 
-def capture(event_type, data=None, date=None, time_spent=None,
-            event_id=None, **kwargs):
-    """Captures a message/event and sends it to the collector"""
+def capture(event_type, tags=None, data=None, date=None, time_spent=None,
+            event_id=None, extra=None, **kwargs):
+    """Captures a message/event and sends it to the recorder
+    
+    :param event_type: the type of event, backend stores should be able to
+                       handle the basic set of events ('Exception', 'Log')
+    :param data: the data for this event
+    :param date: the datetime of this event
+    :param time_spent: a float value representing the duration of the event
+    :param event_id: a 32-length unique string identifying this event
+    :param extra: a dictionary of additional standard metadata
+    :return: a 32-length string identifying this event
+    
+    """
     data = data or {}
     date = date or transform(datetime.datetime.now())
+    extra = extra or {}
+    event_id = event_id or uuid.uuid4().hex
     
-    # tags = tags or []
-    # tags.append(('Host', socket.gethostname()))
+    tags = tags or []
+    tags.append(('Hostname', socket.gethostname()))
 
-    event_id = uuid.uuid4().hex
-    
     # Shorten lists/strings
     for k, v in data.iteritems():
         data[k] = shorten(v)
-        
-    send(event_type=event_type, data=data, date=date, time_spent=time_spent,
-         event_id=event_id, **kwargs)
+
+    # Shorten extra
+    for k, v in extra.iteritems():
+        extra[k] = shorten(v)
+
+    send(event_type=event_type, tags=tags, data=data, date=date,
+         time_spent=time_spent, event_id=event_id, extra=extra, **kwargs)
     return event_id
+

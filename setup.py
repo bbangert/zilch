@@ -31,6 +31,6 @@ setup(name='zilch',
       ],
       entry_points="""
       [console_scripts]
-      zilch-collector = zilch.script:main
+      zilch-recorder = zilch.script:main
       """
 )

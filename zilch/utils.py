@@ -2,7 +2,9 @@
 import datetime
 import hashlib
 import logging
+import types
 import uuid
+from decimal import Decimal
 
 import pkg_resources
 
@@ -43,7 +45,7 @@ def construct_checksum(level=logging.ERROR, class_name='', traceback='', message
     checksum = hashlib.md5(str(level))
     checksum.update(class_name or '')
     if traceback:
-        traceback = '\n'.join(traceback.split('\n')[:-2])
+        traceback = '\n'.join(traceback.split('\n')[:-3])
     message = traceback or message
     if isinstance(message, unicode):
         message = message.encode('utf-8', 'replace')
@@ -130,6 +132,20 @@ def to_unicode(value):
         except Exception:
             value = '(Error decoding value)'
     return value
+
+
+def is_protected_type(obj):
+    """Determine if the object instance is of a protected type.
+
+    Objects of protected types are preserved as-is when passed to
+    force_unicode(strings_only=True).
+    """
+    return isinstance(obj, (
+        types.NoneType,
+        int, long,
+        datetime.datetime, datetime.date, datetime.time,
+        float, Decimal)
+    )
 
 
 def force_unicode(s, encoding='utf-8', strings_only=False, errors='strict'):

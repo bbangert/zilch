@@ -14,8 +14,8 @@ Requirements
 ============
 
 * `zeromq <http://zeromq.org>`_
-* `sqlalchemy <http://sqlalchemy.org/>`_ for the built-in SQLAlchemy collector
-   backend
+* `sqlalchemy <http://sqlalchemy.org/>`_ for the built-in SQLAlchemy collector backend
+
 
 Usage
 =====
@@ -28,7 +28,7 @@ the reporter::
     
     import zilch.client
     
-    zilch.client.collector_host = "tcp://localhost:5555"
+    zilch.client.recorder_host = "tcp://localhost:5555"
 
 Then to report an exception::
     
@@ -38,24 +38,24 @@ Then to report an exception::
     except Exception, e:
         capture_exception()
 
-The exception will then be sent to the collector listening at the
+The exception will then be sent to the recorder_host listening at the
 ``collector_host`` specified.
 
 
-Collecting Exceptions
----------------------
+Recording Exceptions
+--------------------
 
-Without a ``Collector`` running, ZeroMQ will hold onto the messages until it
+Without a ``Recorder`` running, ZeroMQ will hold onto the messages until it
 is available. After which point, it will begin to block (In the future, an
 option will be added to configure the disk offloading of messages).
 
-To start up a Collector, create a database in your SQLAlchemy supported
-database, then start the collector and provide the ZeroMQ connection string to
+To start up a Recorder, create a database in your SQLAlchemy supported
+database, then start the recorder and provide the ZeroMQ connection string to
 bind the socket to, and the SQLAlchemy database URI::
     
-    > zilch-collector tcp://127.0.0.1:5555 postgresql://zilch:zilch@localhost/zilch
+    > zilch-recorder tcp://127.0.0.1:5555 postgresql://zilch:zilch@localhost/zilch
 
-The zilch collector will create the tables necessary on its initial launch.
+The recorder will create the tables necessary on its initial launch.
 
 License
 =======
