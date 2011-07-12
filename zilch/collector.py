@@ -1,5 +1,6 @@
 """Zilch Collector"""
 import time
+import signal
 
 import simplejson
 import zmq
@@ -12,26 +13,36 @@ class Collector(object):
     over ZeroMQ, a ``store`` instance should be provided that
     implements a ``message_received`` and ``flush`` method.
     
-    """
-    _zmq_socket = None
-    
+    """    
     def __init__(self, zeromq_bind=None, store=None):
         self.zeromq_bind = zeromq_bind
         self.store = store
+        signal.signal(signal.SIGTERM, self.shutdown)
+        signal.signal(signal.SIGINT, self.shutdown)
+        signal.signal(signal.SIGUSR1, self.shutdown)
+        
+        self._context = context = zmq.Context()
+        zero_socket = context.socket(zmq.PULL)
+        zero_socket.bind(self.zeromq_bind)
+        self.sock = zero_socket
     
-    @property
-    def sock(self):
-        """ZeroMQ Socket Property
-
-        Caches the ZeroMQ socket on the class.
-
-        """
-        if not self._zmq_socket:
-            context = zmq.Context()
-            zero_socket = context.socket(zmq.PULL)
-            zero_socket.bind(self.zeromq_bind)
-            self._zmq_socket = zero_socket
-        return self._zmq_socket
+    def shutdown(self, signum, stack):
+        """Shutdown the main loop and handle remaining messages"""
+        self.sock.close()
+        messages = True
+        message_count = 0
+        while messages:
+            try:
+                message = self.sock.recv(flags=zmq.NOBLOCK)
+                data = simplejson.loads(message.decode('zlib'))
+                self.store.message_received(data)
+                message_count += 1
+            except zmq.ZMQError, e:
+                messages = False
+        if message_count:
+            self.store.flush()
+        self._context.term()
+        raise SystemExit("Finished processing remaining messages, exiting.")
     
     def main_loop(self):
         """Run the main collector loop
@@ -51,6 +62,7 @@ class Collector(object):
         messages = False
         now = time.time()
         last_flush = now
+                
         while 1:
             try:
                 message = self.sock.recv(flags=zmq.NOBLOCK)
