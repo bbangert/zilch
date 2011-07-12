@@ -16,6 +16,7 @@ Exceptions can then be reported with capture_exception function::
 """
 import base64
 import datetime
+import logging
 import socket
 import sys
 import time
@@ -31,7 +32,7 @@ from zilch.utils import lookup_versions
 from zilch.utils import transform
 
 
-def capture_exception(exc_info=None, tags=None):
+def capture_exception(exc_info=None, level=logging.ERROR):
     """Capture the current exception
     
     :param tags: a list of tuples (key, value) specifying additional tags
@@ -51,46 +52,31 @@ def capture_exception(exc_info=None, tags=None):
     data = {
         'value': transform(exc_value),
         'type': exception_type,
-        'frames': get_traceback_frames(exc_traceback)
+        'level': level,
+        'frames': get_traceback_frames(exc_traceback),
+        'traceback': traceback.format_exc(),
     }
-    modules = [frame.module for frame in data['frames']]
-    data['version'] = lookup_versions(modules)
+    modules = [frame['module'] for frame in data['frames']]
+    data['versions'] = lookup_versions(modules)
     
-    tags = tags or []
-    tags.append(('level', 'error'))
     data = transform(data)
-    return capture('Exception', tags=tags, data=data)
+    return capture('Exception', data=data)
 
 
-def capture(event_type, tags=None, data=None, date=None, time_spent=None,
-            event_id=None, extra=None, culprit=None, **kwargs):
-    """Captures a message/event and sends it to the collector
-    
-    
-    :param event_type: The type of event as a string. The collector should be
-                       capable of associating the event based on this.
-    :param tags: a list of tuples (key, value) specifying additional tags for event
-    :param data: the data base, useful for specifying structured data interfaces. Any key which contains a '.'
-                 will be assumed to be a data interface.
-    :param date: the datetime of this event
-    :param time_spent: a float value representing the duration of the event
-    :param event_id: a 32-length unique string identifying this event
-    :param extra: a dictionary of additional standard metadata
-    :param culprit: a string representing the cause of this event (generally a path to a function)
-    :return: a 32-length string identifying this event
-    
-    """
+def capture(event_type, data=None, date=None, time_spent=None,
+            event_id=None, **kwargs):
+    """Captures a message/event and sends it to the collector"""
     data = data or {}
     date = date or transform(datetime.datetime.now())
-    tags = tags or []
-    tags.append(('Host', socket.gethostname()))
+    # tags = tags or []
+    # tags.append(('Host', socket.gethostname()))
     
     event_id = uuid.uuid4().hex
     # Make sure all data is coerced
     data = transform(data)
     
-    Reporter.send(event_type=event_type, tags=tags, data=data, date=date, 
-                  time_spent=time_spent, event_id=event_id)
+    Reporter.send(event_type=event_type, data=data, date=date, 
+                  time_spent=time_spent, event_id=event_id, **kwargs)
     return event_id
     
 
