@@ -1,22 +1,20 @@
 import sys
-import cmdln
+from optparse import OptionParser
 
-import zilch
+from zilch.collector import Collector
 
-class ZilchCollector(cmdln.Cmdln):
-    name = "zilch-collector"
-
-    @cmdln.alias("sqla")
-    def do_sqlalchemy(self, subcmd, opts, zeromq_bind, database_uri):
-        """${cmd_name}: Run the zilch-collector with the SQLAlchemy backend
-
-        ${cmd_usage}
-        ${cmd_option_list}
-        
-        """
+class ZilchCollector(object):
+    def main(self):
         from zilch.stores.sqla import SQLAlchemyStore
-        store = SQLAlchemyStore(uri=database_uri)
-        collector = zilch.Collector(zeromq_bind=zeromq_bind, store=store)
+        usage = "usage: %prog zeromq_bind database_uri"
+        parser = OptionParser(usage=usage)
+        (options, args) = parser.parse_args()
+        
+        if len(args) < 2:
+            sys.exit("Error: Failed to provide necessary arguments")
+        
+        store = SQLAlchemyStore(uri=args[1])
+        collector = Collector(zeromq_bind=args[0], store=store)
         collector.main_loop()
 
 

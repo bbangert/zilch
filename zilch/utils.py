@@ -51,7 +51,7 @@ def construct_checksum(level=logging.ERROR, class_name='', traceback='', message
     return checksum.hexdigest()
 
 
-def _iter_tb(tb):
+def iter_tb(tb):
     while tb:
         # support for __traceback_hide__ which is used by a few libraries
         # to hide internal frames.
@@ -63,7 +63,7 @@ def _iter_tb(tb):
 
 def get_traceback_frames(tb):
     frames = []
-    for tb in _iter_tb(tb):
+    for tb in iter_tb(tb):
         filename = tb.tb_frame.f_code.co_filename
         function = tb.tb_frame.f_code.co_name
         lineno = tb.tb_lineno - 1
@@ -118,6 +118,7 @@ def transform(value, stack=[], context=None):
     del context[objid]
     return ret
 
+
 def to_unicode(value):
     try:
         value = unicode(force_unicode(value))
@@ -129,6 +130,7 @@ def to_unicode(value):
         except Exception:
             value = '(Error decoding value)'
     return value
+
 
 def force_unicode(s, encoding='utf-8', strings_only=False, errors='strict'):
     """
@@ -183,11 +185,13 @@ def force_unicode(s, encoding='utf-8', strings_only=False, errors='strict'):
 
 def shorten(var):
     var = transform(var)
-    if isinstance(var, basestring) and len(var) > settings.MAX_LENGTH_STRING:
-        var = var[:settings.MAX_LENGTH_STRING] + '...'
-    elif isinstance(var, (list, tuple, set, frozenset)) and len(var) > settings.MAX_LENGTH_LIST:
+    MAX_LENGTH_LIST = 20
+    MAX_LENGTH_STRING = 255
+    if isinstance(var, basestring) and len(var) > MAX_LENGTH_STRING:
+        var = var[:MAX_LENGTH_STRING] + '...'
+    elif isinstance(var, (list, tuple, set, frozenset)) and len(var) > MAX_LENGTH_LIST:
         # TODO: we should write a real API for storing some metadata with vars when
         # we get around to doing ref storage
         # TODO: when we finish the above, we should also implement this for dicts
-        var = list(var)[:settings.MAX_LENGTH_LIST] + ['...', '(%d more elements)' % (len(var) - settings.MAX_LENGTH_LIST,)]
+        var = list(var)[:MAX_LENGTH_LIST] + ['...', '(%d more elements)' % (len(var) - MAX_LENGTH_LIST,)]
     return var
