@@ -71,7 +71,7 @@ class HelperMixin(object):
             kwargs.update(defaults)
             obj = cls(**kwargs)
             Session.add(obj)
-            Session.flush()
+            Session.flush(objects=(obj,))
         return obj
 
 
@@ -129,16 +129,16 @@ group_events = Table(
 
 class Group(Base, HelperMixin):
     __tablename__ = 'group'
-    
+
     id = Column(Integer, primary_key=True)
     type_id = Column(Integer, ForeignKey('event_type.id', ondelete='RESTRICT'))
-    
+
     # this is the combination of md5(' '.join(tags)) + md5(event)
     hash = Column(Text)
 
     # One-line summary used for display purposes
     message = Column(Text, nullable=False)
-    
+
     count = Column(Integer, default=0, nullable=False)
     state = Column(Integer, default=1)
     last_seen = Column(DateTime, default=datetime.datetime.now, nullable=False)
