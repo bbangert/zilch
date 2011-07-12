@@ -12,8 +12,47 @@ functionality provided purely by additional extension packages.
 Requirements
 ============
 
-* `zeromq <zeromq.org>`_
+* `zeromq <http://zeromq.org>`_
+* `sqlalchemy <http://sqlalchemy.org/>`_ for the SQLAlchemy collector backend
 
+Usage
+=====
+
+Reporting an Exception
+----------------------
+
+In the application that wants to report errors, import zilch and configure
+the reporter::
+    
+    import zilch
+    
+    zilch.Reporter.connection_string = "tcp://localhost:5555"
+
+Then to report an exception::
+    
+    try:
+        # Something that explodes
+    except Exception:
+        zilch.capture_exception()
+
+The exception will then be sent to the collector listening at the
+``connection_string`` specified.
+
+
+Collecting Exceptions
+---------------------
+
+Without a ``Collector`` running, ZeroMQ will hold onto the messages until it
+is available. After which point, it will begin to block (In the future, an
+option will be added to configure the disk offloading of messages).
+
+To start up a Collector, create a database in your SQLAlchemy supported
+database, then start the collector and provide the ZeroMQ connection string to
+bind the socket to, and the SQLAlchemy database URI::
+    
+    > zilch-collector sqlalchemy tcp://127.0.0.1:5555 postgresql://zilch:zilch@localhost/zilch
+
+The zilch collector will create the tables necessary on its initial launch.
 
 License
 =======

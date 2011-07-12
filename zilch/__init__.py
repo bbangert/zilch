@@ -33,12 +33,7 @@ from zilch.utils import transform
 
 
 def capture_exception(exc_info=None, level=logging.ERROR):
-    """Capture the current exception
-    
-    :param tags: a list of tuples (key, value) specifying additional tags
-                 for the exception
-
-    """
+    """Capture the current exception"""
     exc_info = exc_info or sys.exc_info()
     exc_type, exc_value, exc_traceback = exc_info
     
@@ -49,17 +44,16 @@ def capture_exception(exc_info=None, level=logging.ERROR):
     else:
         exception_type = exc_type
     
+    tb_message = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
     data = {
         'value': transform(exc_value),
         'type': exception_type,
         'level': level,
         'frames': get_traceback_frames(exc_traceback),
-        'traceback': traceback.format_exc(),
+        'traceback': tb_message,
     }
     modules = [frame['module'] for frame in data['frames']]
     data['versions'] = lookup_versions(modules)
-    
-    data = transform(data)
     return capture('Exception', data=data)
 
 
@@ -68,13 +62,16 @@ def capture(event_type, data=None, date=None, time_spent=None,
     """Captures a message/event and sends it to the collector"""
     data = data or {}
     date = date or transform(datetime.datetime.now())
+    
     # tags = tags or []
     # tags.append(('Host', socket.gethostname()))
-    
+
     event_id = uuid.uuid4().hex
-    # Make sure all data is coerced
-    data = transform(data)
     
+    # Shorten lists/strings
+    for k, v in data.iteritems():
+        data[k] = shorten(v)
+        
     Reporter.send(event_type=event_type, data=data, date=date, 
                   time_spent=time_spent, event_id=event_id, **kwargs)
     return event_id
@@ -173,4 +170,3 @@ class Collector(object):
                 self.store.flush()
                 last_flush = now
                 messages = False
-            time.sleep(0.1)

@@ -8,7 +8,6 @@ from sqlalchemy import Column
 from sqlalchemy import ForeignKey
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import scoped_session
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import relationship
@@ -55,7 +54,7 @@ def init_db(uri, **kwargs):
 class Event(Base):
     __tablename__ = 'events'
 
-    event_id = Column(UUID, primary_key=True)
+    event_id = Column(Text, primary_key=True)
     logger = Column(Text, default='root', index=True)
     level = Column(Integer, default=logging.ERROR, index=True)
     class_name = Column(Text, index=True)

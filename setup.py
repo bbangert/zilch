@@ -28,6 +28,7 @@ setup(name='zilch',
       install_requires=[
           "pyzmq>=2.1",
           "simplejson>=2.1",
+          "cmdln>=1.1.2",
       ],
       entry_points="""
       [console_scripts]

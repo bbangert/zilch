@@ -43,7 +43,7 @@ def construct_checksum(level=logging.ERROR, class_name='', traceback='', message
     checksum = hashlib.md5(str(level))
     checksum.update(class_name or '')
     if traceback:
-        traceback = '\n'.join(traceback.split('\n')[:-3])
+        traceback = '\n'.join(traceback.split('\n')[:-2])
     message = traceback or message
     if isinstance(message, unicode):
         message = message.encode('utf-8', 'replace')
@@ -179,3 +179,15 @@ def force_unicode(s, encoding='utf-8', strings_only=False, errors='strict'):
             s = ' '.join([force_unicode(arg, encoding, strings_only,
                     errors) for arg in s])
     return s
+
+
+def shorten(var):
+    var = transform(var)
+    if isinstance(var, basestring) and len(var) > settings.MAX_LENGTH_STRING:
+        var = var[:settings.MAX_LENGTH_STRING] + '...'
+    elif isinstance(var, (list, tuple, set, frozenset)) and len(var) > settings.MAX_LENGTH_LIST:
+        # TODO: we should write a real API for storing some metadata with vars when
+        # we get around to doing ref storage
+        # TODO: when we finish the above, we should also implement this for dicts
+        var = list(var)[:settings.MAX_LENGTH_LIST] + ['...', '(%d more elements)' % (len(var) - settings.MAX_LENGTH_LIST,)]
+    return var
