@@ -5,7 +5,7 @@ from zilch.collector import Collector
 
 class ZilchCollector(object):
     def main(self):
-        from zilch.stores.sqla import SQLAlchemyStore
+        from zilch.store import SQLAlchemyStore
         usage = "usage: %prog zeromq_bind database_uri"
         parser = OptionParser(usage=usage)
         (options, args) = parser.parse_args()
