@@ -172,6 +172,8 @@ class ExceptionCreator(object):
                 last_seen=date)
         )
         group.last_seen = date
+        
+        # Atomically update the group count
         group.count = Group.count + 1
 
         data = {
