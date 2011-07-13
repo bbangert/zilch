@@ -63,14 +63,14 @@ def capture_exception(exc_info=None, level=logging.ERROR):
     """Capture the current exception"""
     exc_info = exc_info or sys.exc_info()
     exc_type, exc_value, exc_traceback = exc_info
-    
+
     if exc_type and not isinstance(exc_type, str):
         exception_type = exc_type.__name__
         if exc_type.__module__ not in ('__builtin__', 'exceptions'):
             exception_type = exc_type.__module__ + '.' + exception_type
     else:
         exception_type = exc_type
-    
+
     tb_message = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
     data = {
         'value': transform(exc_value),
