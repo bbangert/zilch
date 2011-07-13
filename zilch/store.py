@@ -1,7 +1,8 @@
-"""SQLAlchemy Event Backend"""
+"""SQLAlchemy Storage Backend"""
 import base64
-import hashlib
 import datetime
+import hashlib
+import math
 import logging
 
 import simplejson
@@ -11,6 +12,7 @@ from sqlalchemy import Column
 from sqlalchemy import ForeignKey
 from sqlalchemy import Index
 from sqlalchemy import Table
+from sqlalchemy import text
 from sqlalchemy import func
 from sqlalchemy import UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
@@ -96,7 +98,7 @@ class Event(Base, HelperMixin):
     __tablename__ = 'event'
     
     event_id = Column(Text, primary_key=True)
-    type = Column(Integer, ForeignKey('event_type.id', ondelete='RESTRICT'))
+    type_id = Column(Integer, ForeignKey('event_type.id', ondelete='RESTRICT'))
     
     hash = Column(Text, nullable=False, index=True)
     datetime = Column(DateTime, default=datetime.datetime.now, nullable=False)
@@ -139,11 +141,14 @@ class Group(Base, HelperMixin):
 
     score = Column(Float, default=0)
     events = relationship('Event', secondary=group_events, backref='groups')
+    
+    def generate_score(self):
+        return int(math.log(self.count) * 600 + int(self.last_seen.strftime('%s')))
 
 
 class ExceptionCreator(object):
     @classmethod
-    def create_from_message(cls, message):
+    def create_from_message(cls, message, db_uri):
         data = message['data']
         date = message['date']
         level = int(data.get('level', 0))
@@ -160,7 +165,7 @@ class ExceptionCreator(object):
         )
         group_message = '%s: %s' % (class_name, value)
 
-        event_type = EventType.get_or_create(name='Exception')
+        event_type = EventType.get_or_create(name=message['event_type'])
         tags = [Tag.get_or_create(name=x, value=y) for x,y in message.get('tags', [])]
 
         group = Group.get_or_create(
@@ -172,17 +177,24 @@ class ExceptionCreator(object):
                 last_seen=date)
         )
         group.last_seen = date
-        
+
         # Atomically update the group count
         group.count = Group.count + 1
+        if db_uri.startswith('postgres'):
+            group.score = text('log(count) * 600 + last_seen::abstime::int')
+        elif db_uri.startswith('mysql'):
+            group.score = text('log(times_seen) * 600 + unix_timestamp(last_seen)')
+        else:
+            group.count = group.count or 0
+            group.score = Group.generate_score()
 
         data = {
             'frames': data.get('frames'),
             'versions': data.get('versions'),
             'type': class_name,
             'value': value,
+            'extra': message.get('extra'),
         }
-        data.update(message.get('extra', {}))
 
         event = Event(
             hash=hash,
@@ -200,17 +212,19 @@ class ExceptionCreator(object):
 
 event_classes = {
     'Exception': ExceptionCreator,
+    'HTTPException': ExceptionCreator,
 }
 
 
 class SQLAlchemyStore(object):
     def __init__(self, uri=None):
         init_db(uri)
+        self.uri = uri
 
     def message_received(self, message):
         EventClass = event_classes.get(message['event_type'])
         if EventClass:
-            event = EventClass.create_from_message(message)
+            event = EventClass.create_from_message(message, self.uri)
             Session.add(event)
 
     def flush(self):

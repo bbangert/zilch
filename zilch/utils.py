@@ -55,10 +55,6 @@ def construct_checksum(level=logging.ERROR, class_name='', traceback='', message
 
 def iter_tb(tb):
     while tb:
-        # support for __traceback_hide__ which is used by a few libraries
-        # to hide internal frames.
-        if tb.tb_frame.f_locals.get('__traceback_hide__'):
-            continue
         yield tb
         tb = tb.tb_next
 
@@ -96,7 +92,10 @@ def transform(value, stack=[], context=None):
         ret = 'cycle'
     transform_rec = lambda o: transform(o, stack + [value], context)
     if isinstance(value, (tuple, list, set, frozenset)):
-        ret = type(value)(transform_rec(o) for o in value)
+        try:
+            ret = type(value)(transform_rec(o) for o in value)
+        except:
+            ret = repr(value)
     elif isinstance(value, uuid.UUID):
         ret = repr(value)
     elif isinstance(value, datetime.datetime):
@@ -104,7 +103,7 @@ def transform(value, stack=[], context=None):
     elif isinstance(value, datetime.date):
         ret = value.strftime('%Y-%m-%d')
     elif isinstance(value, dict):
-        ret = dict((k, transform_rec(v)) for k, v in value.iteritems())
+        ret = dict((transform_rec(k), transform_rec(v)) for k, v in value.iteritems())
     elif isinstance(value, unicode):
         ret = to_unicode(value)
     elif isinstance(value, str):
@@ -116,7 +115,7 @@ def transform(value, stack=[], context=None):
         # XXX: we could do transform(repr(value)) here
         ret = to_unicode(value)
     else:
-        ret = value
+        ret = repr(value)
     del context[objid]
     return ret
 

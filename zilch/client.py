@@ -14,6 +14,13 @@ Exceptions can then be reported with capture_exception function::
     except Exception, e:
         capture_exception()
 
+To add process-wide tags that should be recorded for all events sent in the
+current process::
+    
+    zilch.client.capture_tags.append(
+        ('Application', 'My Awesome App')
+    )
+
 """
 import datetime
 import logging
@@ -24,6 +31,8 @@ import uuid
 
 import zmq
 import simplejson
+from webob import Request
+from webob import Response
 
 from zilch.exc import ConfigurationError
 from zilch.utils import get_traceback_frames
@@ -34,6 +43,8 @@ from zilch.utils import transform
 
 recorder_host = None
 _zeromq_socket = None
+capture_tags = []
+
 
 def get_socket():
     """ZeroMQ Socket
@@ -59,11 +70,11 @@ def send(**kwargs):
     get_socket().send(data, flags=zmq.NOBLOCK)
 
 
-def capture_exception(exc_info=None, level=logging.ERROR):
+def capture_exception(exc_info=None, level=logging.ERROR, tags=None, extra=None):
     """Capture the current exception"""
     exc_info = exc_info or sys.exc_info()
     exc_type, exc_value, exc_traceback = exc_info
-
+    
     if exc_type and not isinstance(exc_type, str):
         exception_type = exc_type.__name__
         if exc_type.__module__ not in ('__builtin__', 'exceptions'):
@@ -81,7 +92,7 @@ def capture_exception(exc_info=None, level=logging.ERROR):
     }
     modules = [frame['module'] for frame in data['frames']]
     data['versions'] = lookup_versions(modules)
-    return capture('Exception', data=data)
+    return capture('Exception', tags=tags, data=data, extra=extra)
 
 
 def capture(event_type, tags=None, data=None, date=None, time_spent=None,
@@ -104,17 +115,17 @@ def capture(event_type, tags=None, data=None, date=None, time_spent=None,
     event_id = event_id or uuid.uuid4().hex
     
     tags = tags or []
+    tags.extend(capture_tags)
     tags.append(('Hostname', socket.gethostname()))
-
+    
     # Shorten lists/strings
-    for k, v in data.iteritems():
+    for k, v in data.items():
         data[k] = shorten(v)
 
     # Shorten extra
-    for k, v in extra.iteritems():
+    for k, v in extra.items():
         extra[k] = shorten(v)
-
+    
     send(event_type=event_type, tags=tags, data=data, date=date,
          time_spent=time_spent, event_id=event_id, extra=extra, **kwargs)
     return event_id
-
