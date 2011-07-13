@@ -71,7 +71,7 @@ class HelperMixin(object):
             kwargs.update(defaults)
             obj = cls(**kwargs)
             Session.add(obj)
-            Session.flush(objects=(obj,))
+            Session.flush()
         return obj
 
 
@@ -113,13 +113,6 @@ class EventType(Base, HelperMixin):
     name = Column(Text, nullable=False, index=True)
 
 
-group_tags = Table(
-    'group_tags', Base.metadata,
-    Column('group_id', Integer, ForeignKey('group.id', ondelete='CASCADE')),
-    Column('tag_id', Integer, ForeignKey('tag.id', ondelete='CASCADE'))
-)
-
-
 group_events = Table(
     'group_events', Base.metadata,
     Column('group_id', Integer, ForeignKey('group.id', ondelete='CASCADE')),
@@ -145,7 +138,6 @@ class Group(Base, HelperMixin):
     first_seen = Column(DateTime, default=datetime.datetime.now, nullable=False)
 
     score = Column(Float, default=0)
-    tags = relationship('Tag', secondary=group_tags)
     events = relationship('Event', secondary=group_events, backref='groups')
 
 
@@ -171,14 +163,9 @@ class ExceptionCreator(object):
         event_type = EventType.get_or_create(name='Exception')
         tags = [Tag.get_or_create(name=x, value=y) for x,y in message.get('tags', [])]
 
-        tag_names = [tag.name for tag in tags]
-        group_hash = hashlib.md5(' '.join(tag_names))
-        group_hash.update(hash)
-        group_hash = group_hash.hexdigest()
-
         group = Group.get_or_create(
             type_id=event_type.id,
-            hash=group_hash,
+            hash=hash,
             defaults=dict(
                 message=group_message,
                 first_seen=date,
@@ -197,6 +184,7 @@ class ExceptionCreator(object):
 
         event = Event(
             hash=hash,
+            type_id=event_type.id,
             event_id=message['event_id'],
             datetime=date,
             data=data,
