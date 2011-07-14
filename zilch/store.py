@@ -31,7 +31,7 @@ from zilch.utils import construct_checksum
 log = logging.getLogger(__name__)
 
 Base = declarative_base()
-Session = scoped_session(sessionmaker())
+Session = scoped_session(sessionmaker(expire_on_commit=False))
 
 
 class GzippedJSON(TypeDecorator):
@@ -73,7 +73,8 @@ class HelperMixin(object):
             kwargs.update(defaults)
             obj = cls(**kwargs)
             Session.add(obj)
-            Session.flush()
+            Session.commit()
+            obj = Session.query(cls).filter_by(**kwargs).first()
         return obj
 
 
@@ -176,17 +177,22 @@ class ExceptionCreator(object):
                 first_seen=date,
                 last_seen=date)
         )
-        group.last_seen = date
 
-        # Atomically update the group count
-        group.count = Group.count + 1
-        if db_uri.startswith('postgres'):
+        if group.count == 0:
+            group.count = 1
+            last_seen = datetime.datetime.strptime(date, '%Y-%m-%dT%H:%M:%S.%f')
+            group.score = int(math.log(1) * 600 + int(last_seen.strftime('%s')))
+        elif db_uri.startswith('postgres'):
             group.score = text('log(count) * 600 + last_seen::abstime::int')
         elif db_uri.startswith('mysql'):
             group.score = text('log(times_seen) * 600 + unix_timestamp(last_seen)')
         else:
             group.count = group.count or 0
-            group.score = Group.generate_score()
+            group.score = group.generate_score()
+        group.last_seen = date
+
+        # Atomically update the group count
+        group.count = Group.count + 1
 
         data = {
             'frames': data.get('frames'),
@@ -229,3 +235,4 @@ class SQLAlchemyStore(object):
 
     def flush(self):
         Session.commit()
+        Session.remove()

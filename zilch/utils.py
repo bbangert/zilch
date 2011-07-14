@@ -4,9 +4,12 @@ import hashlib
 import logging
 import types
 import uuid
+import re
 from decimal import Decimal
 
 import pkg_resources
+
+NUKE_LINE_NO = re.compile(r', line \d+', re.M)
 
 def lookup_versions(module_list, include_deps=False):
     """Given a list of modules, look up their versions and return
@@ -45,7 +48,8 @@ def construct_checksum(level=logging.ERROR, class_name='', traceback='', message
     checksum = hashlib.md5(str(level))
     checksum.update(class_name or '')
     if traceback:
-        traceback = '\n'.join(traceback.split('\n')[:-3])
+        lines = map(lambda x: re.sub(NUKE_LINE_NO, '', x), traceback.split('\n'))
+        traceback = '\n'.join(lines[:-3])
     message = traceback or message
     if isinstance(message, unicode):
         message = message.encode('utf-8', 'replace')

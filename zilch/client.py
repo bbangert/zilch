@@ -120,6 +120,8 @@ def capture(event_type, tags=None, data=None, date=None, time_spent=None,
     
     # Shorten lists/strings
     for k, v in data.items():
+        if k == 'traceback':
+            continue
         data[k] = shorten(v)
 
     # Shorten extra
