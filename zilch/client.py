@@ -35,6 +35,7 @@ from webob import Request
 from webob import Response
 
 from zilch.exc import ConfigurationError
+from zilch.utils import construct_checksum
 from zilch.utils import get_traceback_frames
 from zilch.utils import lookup_versions
 from zilch.utils import shorten
@@ -73,7 +74,7 @@ def send(**kwargs):
 def capture_exception(exc_info=None, level=logging.ERROR, tags=None, extra=None):
     """Capture the current exception"""
     exc_info = exc_info or sys.exc_info()
-    exc_type, exc_value, exc_traceback = exc_info
+    exc_type, exc_value, exc_traceback = exc_info    
     
     if exc_type and not isinstance(exc_type, str):
         exception_type = exc_type.__name__
@@ -83,6 +84,18 @@ def capture_exception(exc_info=None, level=logging.ERROR, tags=None, extra=None)
         exception_type = exc_type
 
     tb_message = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
+
+    # Check to see if this hash has been reported past the threshold
+    # TODO: Use this in the future
+    # hash = construct_checksum(
+    #     level=level,
+    #     class_name=exception_type,
+    #     traceback=tb_message,
+    #     message=transform(exc_value),
+    # )
+    # cur_sec = int(time.time())
+    # capture_key = '%s %s' % (hash, cur_sec)
+    
     data = {
         'value': transform(exc_value),
         'type': exception_type,
@@ -110,7 +123,7 @@ def capture(event_type, tags=None, data=None, date=None, time_spent=None,
     
     """
     data = data or {}
-    date = date or transform(datetime.datetime.now())
+    date = date or transform(datetime.datetime.utcnow())
     extra = extra or {}
     event_id = event_id or uuid.uuid4().hex
     

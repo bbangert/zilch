@@ -79,22 +79,10 @@ class ZilchMiddleware(object):
             data['Configuration'] = dict(environ['weberror.config'])
         
         zilch.client.capture_exception(exc_info=exc_info, extra=data)
-        head_html = ''
-        exception = 'An error occurred.'
-        extra = ''
         
-        return '''
-        <html>
-        <head>
-        <title>Server Error</title>
-        %s
-        </head>
-        <body>
-        <h1>Server Error</h1>
-        %s
-        %s
-        </body>
-        </html>''' % (head_html, exception, extra)
+        return """<html><head><title>Server Error</title></head>
+                  <body><h1>Server Error</h1>An error occurred.</body>
+                  </html>"""
 
     process_combos = {
         # multiprocess, multithread, run_once
