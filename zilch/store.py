@@ -34,6 +34,50 @@ Base = declarative_base()
 Session = scoped_session(sessionmaker(expire_on_commit=False))
 
 
+# Traversal objects
+class Root(object):
+    __name__ = ''
+    __parent__ = None
+    
+    @property
+    def object_keys(self):
+        return {
+            'event': Event,
+            'event_type': EventType,
+            'group': Group,
+            'tag': Tag,
+        }
+    
+    def __init__(self, request):
+        self.request = request
+    
+    def __getitem__(self, name):
+        obj = self.object_keys.get(name)
+        if obj:
+            ctx = DatabaseTable(obj)
+            ctx.__parent__ = self
+            ctx.__name__ = name
+            return ctx
+        else:
+            raise KeyError()
+
+
+class DatabaseTable(object):
+    def __init__(self, object):
+        self.table = object
+    
+    def __getitem__(self, key):
+        table = self.table
+        db_key = getattr(table, table.key_lookup)
+        ctx = Session.query(table).filter(db_key==key).first()
+        if ctx:
+            ctx.__parent__ = self
+            ctx.__name__ = key
+            return ctx
+        else:
+            raise KeyError()
+
+
 class GzippedJSON(TypeDecorator):
     """Implements a gzipped JSON type to store additional event
     information"""
@@ -65,6 +109,8 @@ def init_db(uri, **kwargs):
 
 
 class HelperMixin(object):
+    key_lookup = 'id'
+    
     @classmethod
     def get_or_create(cls, **kwargs):
         defaults = kwargs.pop('defaults', {})
@@ -97,6 +143,7 @@ event_tags = Table(
 
 class Event(Base, HelperMixin):
     __tablename__ = 'event'
+    key_lookup = 'event_id'
     
     event_id = Column(Text, primary_key=True)
     type_id = Column(Integer, ForeignKey('event_type.id', ondelete='RESTRICT'))
@@ -111,6 +158,7 @@ class Event(Base, HelperMixin):
 
 class EventType(Base, HelperMixin):
     __tablename__ = 'event_type'
+    key_lookup = 'name'
     
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False, index=True)
@@ -141,10 +189,18 @@ class Group(Base, HelperMixin):
     first_seen = Column(DateTime, default=datetime.datetime.now, nullable=False)
 
     score = Column(Float, default=0)
-    events = relationship('Event', secondary=group_events, backref='groups')
+    events = relationship('Event', secondary=group_events, lazy='dynamic',
+                          backref='groups')
     
     def generate_score(self):
         return int(math.log(self.count) * 600 + int(self.last_seen.strftime('%s')))
+    
+    def last_event(self):
+        return self.events.order_by(Event.datetime.desc()).first()
+    
+    @classmethod
+    def recently_seen(cls, limit=20):
+        return Session.query(cls).order_by(cls.last_seen.desc()).limit(limit)
 
 
 class ExceptionCreator(object):

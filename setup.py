@@ -31,7 +31,8 @@ setup(name='zilch',
       ],
       entry_points="""
       [console_scripts]
-      zilch-recorder = zilch.script:main
+      zilch-recorder = zilch.script:zilch_recorder
+      zilch-web = zilch.script:zilch_web
       
       [paste.filter_app_factory]
       middleware = zilch.middleware:make_error_middleware

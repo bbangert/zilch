@@ -1,9 +1,11 @@
 import sys
 from optparse import OptionParser
 
-from zilch.collector import Collector
+from paste.httpserver import serve
 
-class ZilchCollector(object):
+from zilch.recorder import Recorder
+
+class ZilchRecorder(object):
     def main(self):
         from zilch.store import SQLAlchemyStore
         usage = "usage: %prog zeromq_bind database_uri"
@@ -14,10 +16,36 @@ class ZilchCollector(object):
             sys.exit("Error: Failed to provide necessary arguments")
         
         store = SQLAlchemyStore(uri=args[1])
-        collector = Collector(zeromq_bind=args[0], store=store)
-        collector.main_loop()
+        recorder = Recorder(zeromq_bind=args[0], store=store)
+        recorder.main_loop()
 
 
-def main():
-    zilch = ZilchCollector()
+class ZilchWeb(object):
+    def main(self):
+        from zilch.web import make_webapp
+        usage = "usage: %prog database_uri"
+        parser = OptionParser(usage=usage)
+        parser.add_option("--port", dest="port", type="int", default=8000,
+                          help="Port to bind the webserver to")
+        parser.add_option("--host", dest="hostname", default="127.0.0.1",
+                          help="Hostname/IP to bind the webserver to")
+        (options, args) = parser.parse_args()
+        
+        if len(args) < 1:
+            sys.exit("Error: Failed to provide a database_uri")
+        
+        app = make_webapp(args[0])
+        return serve(app, host=options.hostname, port=options.port)
+
+
+def zilch_recorder():
+    zilch = ZilchRecorder()
     sys.exit(zilch.main())
+
+def zilch_web():
+    try:
+        import pyramid
+    except ImportError:
+        raise SystemExit("Pyramid 1.0 or greater must be installed before running zilch-web.")
+    web = ZilchWeb()
+    sys.exit(web.main())
