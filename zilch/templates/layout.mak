@@ -1,6 +1,7 @@
 <!doctype html> 
 <html lang="en"> 
-    <head> 
+    <head>
+        <meta charset="UTF-8"> 
         <title>${self.title()}</title>
         <!--[if lt IE 9]>
         <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
@@ -10,5 +11,4 @@
         ${next.body()}
     </body>
 </html>
-
 <%def name="title()">zilch</%def>

@@ -17,7 +17,6 @@ from zilch.store import Tag
 from zilch.store import Root
 
 
-# Views
 @view_config(context=Root)
 def home(request):
     return HTTPFound(location='/group/')
@@ -25,13 +24,19 @@ def home(request):
 
 @view_config(context=DatabaseTable, path_info='/group/', renderer='/group/index.mak')
 def group_index(context, request):
-    return {'groups': Group.recently_seen()}
+    groups = list(Group.recently_seen())
+    for group in groups:
+        tags = ['%s:%s' % (tag.name, tag.value) for tag in group.all_tags()]
+        group.tags = ' '.join(tags)
+    return {'groups': groups}
 
 
 @view_config(context=Group, renderer='/group/show.mak')
 def group_details(context, request):
     last_event = context.last_event()
-    return {'last_event': context.last_event(), 'group': context}
+    event_type = context.event_type
+    return {'last_event': context.last_event(), 'group': context,
+            'event_type': event_type}
 
 
 def make_webapp(database_uri):

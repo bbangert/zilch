@@ -71,10 +71,11 @@ def send(**kwargs):
     get_socket().send(data, flags=zmq.NOBLOCK)
 
 
-def capture_exception(exc_info=None, level=logging.ERROR, tags=None, extra=None):
+def capture_exception(event_type="Exception", exc_info=None, 
+                      level=logging.ERROR, tags=None, extra=None):
     """Capture the current exception"""
     exc_info = exc_info or sys.exc_info()
-    exc_type, exc_value, exc_traceback = exc_info    
+    exc_type, exc_value, exc_traceback = exc_info
     
     if exc_type and not isinstance(exc_type, str):
         exception_type = exc_type.__name__
@@ -105,7 +106,7 @@ def capture_exception(exc_info=None, level=logging.ERROR, tags=None, extra=None)
     }
     modules = [frame['module'] for frame in data['frames']]
     data['versions'] = lookup_versions(modules)
-    return capture('Exception', tags=tags, data=data, extra=extra)
+    return capture(event_type, tags=tags, data=data, extra=extra)
 
 
 def capture(event_type, tags=None, data=None, date=None, time_spent=None,

@@ -78,7 +78,8 @@ class ZilchMiddleware(object):
         if 'weberror.config' in environ:
             data['Configuration'] = dict(environ['weberror.config'])
         
-        zilch.client.capture_exception(exc_info=exc_info, extra=data)
+        zilch.client.capture_exception("HTTPException", exc_info=exc_info,
+                                       extra=data)
         
         return """<html><head><title>Server Error</title></head>
                   <body><h1>Server Error</h1>An error occurred.</body>

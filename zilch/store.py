@@ -153,7 +153,7 @@ class Event(Base, HelperMixin):
     time_spent = Column(Integer)
     data = Column(GzippedJSON)
     
-    tags = relationship('Tag', secondary=event_tags)
+    tags = relationship('Tag', secondary=event_tags, backref='events')
 
 
 class EventType(Base, HelperMixin):
@@ -198,9 +198,15 @@ class Group(Base, HelperMixin):
     def last_event(self):
         return self.events.order_by(Event.datetime.desc()).first()
     
+    def all_tags(self):
+        query = Session.query(Tag).join(Tag.events).join(Event.groups)
+        return query.filter(Group.id==self.id).group_by(Tag.id, Tag.name, Tag.value)
+    
     @classmethod
     def recently_seen(cls, limit=20):
         return Session.query(cls).order_by(cls.last_seen.desc()).limit(limit)
+    
+    event_type = relationship(EventType)
 
 
 class ExceptionCreator(object):
@@ -256,6 +262,7 @@ class ExceptionCreator(object):
             'type': class_name,
             'value': value,
             'extra': message.get('extra'),
+            'traceback': traceback,
         }
 
         event = Event(
