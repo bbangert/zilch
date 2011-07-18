@@ -202,6 +202,12 @@ class Group(Base, HelperMixin):
         query = Session.query(Tag).join(Tag.events).join(Event.groups)
         return query.filter(Group.id==self.id).group_by(Tag.id, Tag.name, Tag.value)
     
+    def latest_events(self):
+        query = Session.query(Event.event_id, Event.datetime).join(Event.groups)
+        query = query.filter(Group.id==self.id).order_by(Event.datetime.desc())
+        query = query.limit(50)
+        return query.all()
+    
     @classmethod
     def recently_seen(cls, limit=20):
         return Session.query(cls).order_by(cls.last_seen.desc()).limit(limit)

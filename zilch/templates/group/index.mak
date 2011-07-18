@@ -26,5 +26,15 @@
         </tbody>
     </table>
 </section>
+<%def name="javascript()">
+${parent.javascript()}
+<script>
+$(document).ready(function() {
+    $('section table tr').click(function() {
+        $(this).find('td a').click();
+    });
+});
+</script>
+</%def>
 <%inherit file="layout.mak"/>
 <%namespace file="/common.mak" import="display_date"/>

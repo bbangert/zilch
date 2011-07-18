@@ -8,9 +8,16 @@
 </%def>
 
 <h1>${group.message}</h1>
-<p>Showing most recent event with details.</p>
 
-${display_httpexception(last_event)}
+<p class="event">Event: 
+<select id="event_selector" name="event_selection">
+    % for ev in latest_events:
+        <% current_event = ev.event_id==event.event_id %>
+    <option value="${ev.event_id}" ${'selected="selected"' if current_event else ''}>${'-> ' if current_event else ''}${ev.event_id} - ${display_date(ev.datetime)}</option>
+    % endfor
+</select></p>
+
+${display_httpexception(event)}
 
 <%def name="javascript()">
 ${parent.javascript()}
@@ -19,9 +26,16 @@ $(document).ready(function() {
     $('div.traceback-frames div.frame').toggle(function() {
         $(this).find('pre.around, div.localvars').toggle();
         $(this).find('pre.context_line').toggleClass('highlight');
+        return false;
     }, function() {
         $(this).find('pre.around, div.localvars').toggle();
         $(this).find('pre.context_line').toggleClass('highlight');        
+        return false;
+    });
+    
+    $('#event_selector').change(function() {
+        document.location = '${request.application_url}/group/${group.id}/event/' + $(this).val()
+        return false;
     });
 });
 </script>
@@ -30,9 +44,12 @@ $(document).ready(function() {
 <%def name="display_httpexception(event)">
 <section class="httpexception">
     <% extra = event.data.get('extra', {}) %>
-    <p class="recorded">Event occured <time datetime=${event.datetime}>${display_date(event.datetime)}</time></p>
+    <div class="tags">
+    % for tag in sorted(event.tags, key=lambda v: v.name):
+        <div class="tag"><mark span="name">${tag.name}</mark><em>${tag.value}</em></div>
+    % endfor
+    </div>
     <div class="full_traceback">
-        <h2>Complete Traceback with Details</h2>
         ${full_traceback(event.data['frames'])}
     </div>
     % if 'CGI Variables' in extra:
@@ -57,7 +74,7 @@ $(document).ready(function() {
 <div class="traceback-frames">
 % for frame in frames[::-1]:
     <div class="frame">
-        <h4>Module <cite class="module">${frame['module']}</cite>:
+        <h4><cite class="module">${frame['module']}</cite>:
             <em class="line">${frame['lineno']}</em>,
             in <code class="function">${frame['function']}</code></h4>
         <div class="context">

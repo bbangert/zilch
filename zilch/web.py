@@ -12,6 +12,7 @@ from pyramid.response import Response
 from pyramid.view import view_config
 
 from zilch.store import init_db
+from zilch.store import Session
 from zilch.store import Event
 from zilch.store import EventType
 from zilch.store import DatabaseTable
@@ -35,14 +36,20 @@ def group_index(context, request):
 
 
 @view_config(context=Group, renderer='/group/show.mak')
+@view_config(context=Group, name='event', renderer='/group/show.mak')
 def group_details(context, request):
-    last_event = context.last_event()
+    if request.subpath:
+        event_id = request.subpath[0]
+        event = Session.query(Event).filter_by(event_id=event_id).one()
+    else:
+        event = context.last_event()
     event_type = context.event_type
-    tb = last_event.data['traceback'].split('\n')
+    latest_events = context.latest_events()
+    tb = event.data['traceback'].split('\n')
     tb.reverse()
     tb = tb[1:-1]
-    last_event.data['traceback'] = '\n'.join(tb)
-    return {'last_event': last_event, 'group': context,
+    event.data['traceback'] = '\n'.join(tb)
+    return {'event': event, 'group': context, 'latest_events': latest_events,
             'event_type': event_type}
 
 

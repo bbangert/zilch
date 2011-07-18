@@ -58,10 +58,36 @@ section.httpexception
         font-size: 18px
         color: #444
     
+    select
+        margin-bottom: 1em
+        display: block
+    
+    div.tags
+        margin: 1em 0 2em 0
+        
+        div.tag
+            display: inline
+            margin: 0 1em 0 0
+            border: 1px solid #222
+            padding: 0 1em 0 0
+            +box-shadow(#111, 1px, 1px, 3px)
+            
+            mark
+                background-color: #4ba0e3
+                color: #fff
+                border-right: 1px solid #222
+                padding: 0 0.6em 0 1em
+            
+            em
+                padding: 0 0.6em 0 1em
+
     time
         color: #000
     
     .frame
+        border-left: 2px solid #fff
+        border-right: 2px solid #fff
+    
         border-bottom: 1px solid #d9d9d9
         h4
             padding: 2px 0 2px 8px
@@ -109,10 +135,12 @@ section.httpexception
             margin: 0 0 1em 3em
 
     div.frame:hover
-        background-color: #ffd
+        border-left: 2px solid #444
+        border-right: 2px solid #444
         cursor: pointer
             
     .full_traceback
+        clear: both
         margin-bottom: 1em
             
     table tbody
