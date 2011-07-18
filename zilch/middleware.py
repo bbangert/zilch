@@ -15,6 +15,7 @@ class ZilchMiddleware(object):
     def __init__(self, application, global_conf=None, **kw):
         self.application = application
         global_conf = global_conf or {}
+        self.tags = global_conf.get('tags', []) or kw.get('tags', [])
         recorder_host = global_conf.get('zilch.recorder_host') or kw.get('zilch.recorder_host')
         if recorder_host:
             zilch.client.recorder_host = recorder_host
@@ -79,7 +80,7 @@ class ZilchMiddleware(object):
             data['Configuration'] = dict(environ['weberror.config'])
         
         zilch.client.capture_exception("HTTPException", exc_info=exc_info,
-                                       extra=data)
+                                       extra=data, tags=self.tags)
         
         return """<html><head><title>Server Error</title></head>
                   <body><h1>Server Error</h1>An error occurred.</body>

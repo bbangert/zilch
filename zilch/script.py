@@ -29,12 +29,14 @@ class ZilchWeb(object):
                           help="Port to bind the webserver to")
         parser.add_option("--host", dest="hostname", default="127.0.0.1",
                           help="Hostname/IP to bind the webserver to")
+        parser.add_option("--timezone", dest="timezone", default="US/Pacific",
+                          help="Default timezone to format dates for")                          
         (options, args) = parser.parse_args()
         
         if len(args) < 1:
             sys.exit("Error: Failed to provide a database_uri")
         
-        app = make_webapp(args[0])
+        app = make_webapp(args[0], default_timezone=options.timezone)
         return serve(app, host=options.hostname, port=options.port)
 
 

@@ -1,0 +1,167 @@
+@import blueprint/liquid
+@import blueprint/typography
+@import compass/css3/text-shadow
+@import compass/css3/border-radius
+@import compass/css3/box-shadow
+@import compass/css3/images
+@import compass/css3/transform
+@import compass/reset
+
+body > div
+    +container
+    +blueprint-typography
+    width: 95%
+    
+    h1
+        font-size: 36px
+    
+    h2
+        font-size: 28px
+    
+    h3
+        font-size: 20px
+    
+    h4
+        font-size: 16px
+
+
+header
+    margin: 10px auto
+    
+    nav
+        color: #eee
+        padding: 5px
+        background-color: #484848
+        +background-image(linear-gradient(#666666, #484848))
+        +box-shadow(#484848, 1px, 1px, 3px)
+        border: 1px solid #222
+        letter-spacing: 1px
+    
+        a, a:link, a:visited
+            color: #eee
+        
+        a:hover
+            color: #4ba0e3
+
+.plain_traceback pre
+    font-size: 12px
+    background-color: #eee
+    border: 1px solid #ccc
+    padding: 5px
+    overflow: auto
+    height: 150px
+
+section.httpexception
+    padding-right: 10px
+    
+    p.recorded
+        font-size: 18px
+        color: #444
+    
+    time
+        color: #000
+    
+    .frame
+        border-bottom: 1px solid #d9d9d9
+        h4
+            padding: 2px 0 2px 8px
+            font-size: 16px
+            margin: 0
+            
+            em
+                font-weight: bold
+            
+            cite
+                font-weight: bold
+                font: "andale mono", "lucida console", monospace
+            
+            code
+                font-size: 14px
+                color: #500
+                
+        pre
+            margin: 0
+            font-size: 12px
+            background-color: #eee
+            border: 1px solid #ccc
+        
+        pre.around, div.localvars
+            display: none
+        
+        pre.context_line
+            background-color: #fff
+            border: none
+        
+        pre.context_line.highlight
+            background-color: #ff9
+            border-left: 1px solid #ccc
+            border-right: 1px solid #ccc
+        
+        pre.context_line.highlight, pre.around
+            margin: 0 4em 0 4em
+        
+        div.localvars h4
+            margin: 0.5em 0 0 2em
+            font-weight: bold
+            font-size: 16px
+        
+        table
+            margin: 0 0 1em 3em
+
+    div.frame:hover
+        background-color: #ffd
+        cursor: pointer
+            
+    .full_traceback
+        margin-bottom: 1em
+            
+    table tbody
+        font-size: 14px
+        
+        tr:hover
+            background-color: inherit
+            cursor: inherit
+
+
+section table
+    tr
+        border-bottom: 1px solid #ddd
+
+    thead th
+        +background-image(linear-gradient(#4ba0e3, #327cd1))
+        +single-text-shadow(#111, 1px, 1px)
+        border-bottom: 1px solid #000
+        border-top: 1px solid #000
+        font-weight: bold
+        color: #fff
+        
+    
+    td.key
+        background-color: #eee
+        font-weight: bold
+    
+    td
+        overflow: auto
+    
+    tr:hover
+        background-color: #ffc
+        cursor: pointer
+
+
+section.filters
+    position: fixed
+    top: 50%
+    right: 200px
+    width: 200px
+    border: 1px solid #000
+    display: none
+    
+    h3
+        margin: 20px 0 0 0
+        font-weight: bold
+        float: left
+        +rotate(-90deg)
+    
+    div
+        +column(18)
+        min-height: 200px
