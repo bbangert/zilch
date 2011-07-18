@@ -4,22 +4,22 @@
     <table width="100%">
         <thead>
             <tr>
+                <th>Count</th>
                 <th>Message</th>
+                <th>Last Seen</th>
                 <th>Tags</th>
                 <th>Type</th>
-                <th>Count</th>
-                <th>Last Seen</th>
                 <th>First Seen</th>
             </tr>
         </thead>
         <tbody>
         % for group in groups:
         <tr>
+            <td>${group.count}</td>
             <td><a href="${request.resource_url(request.context)}${group.id}">${group.message}</a></td>
+            <td>${display_date(group.last_seen)}</td>
             <td>${group.tags}</td>
             <td>${group.event_type.name}</td>
-            <td>${group.count}</td>
-            <td>${display_date(group.last_seen)}</td>
             <td>${display_date(group.first_seen)}</td>
         </tr>
         % endfor

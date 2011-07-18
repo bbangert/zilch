@@ -84,12 +84,21 @@ section.httpexception
     time
         color: #000
     
-    .frame
-        border-left: 2px solid #fff
-        border-right: 2px solid #fff
+    .frame.hidden
+        display: none
     
+    .frame
         border-bottom: 1px solid #d9d9d9
-        h4
+        
+        > h4:hover
+            border-left: 2px solid #444
+            border-right: 2px solid #444
+            cursor: pointer
+        
+        > h4
+            border-left: 2px solid #fff
+            border-right: 2px solid #fff
+        
             padding: 2px 0 2px 8px
             font-size: 16px
             margin: 0
@@ -134,15 +143,21 @@ section.httpexception
         table
             margin: 0 0 1em 3em
 
-    div.frame:hover
-        border-left: 2px solid #444
-        border-right: 2px solid #444
-        cursor: pointer
-            
+    div.traceback-frames
+        > a
+            display: block
+            margin: 1em 0 1em 0
+        
+        > a:before
+            content: "\2192 "
+        
     .full_traceback
         clear: both
         margin-bottom: 1em
-            
+    
+    div.wsgi, div.cgi
+        margin: 3em 0 3em 0
+    
     table tbody
         font-size: 14px
         

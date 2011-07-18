@@ -45,10 +45,6 @@ def group_details(context, request):
         event = context.last_event()
     event_type = context.event_type
     latest_events = context.latest_events()
-    tb = event.data['traceback'].split('\n')
-    tb.reverse()
-    tb = tb[1:-1]
-    event.data['traceback'] = '\n'.join(tb)
     return {'event': event, 'group': context, 'latest_events': latest_events,
             'event_type': event_type}
 

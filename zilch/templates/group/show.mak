@@ -23,19 +23,29 @@ ${display_httpexception(event)}
 ${parent.javascript()}
 <script>
 $(document).ready(function() {
-    $('div.traceback-frames div.frame').toggle(function() {
-        $(this).find('pre.around, div.localvars').toggle();
-        $(this).find('pre.context_line').toggleClass('highlight');
+    $('div.traceback-frames div.frame > h4').toggle(function() {
+        $(this).parent().find('pre.around, div.localvars').toggle();
+        $(this).parent().find('pre.context_line').toggleClass('highlight');
         return false;
     }, function() {
-        $(this).find('pre.around, div.localvars').toggle();
-        $(this).find('pre.context_line').toggleClass('highlight');        
+        $(this).parent().find('pre.around, div.localvars').toggle();
+        $(this).parent().find('pre.context_line').toggleClass('highlight');        
         return false;
     });
+    
+    $('div.traceback-frames div.frame h4:first').click();
     
     $('#event_selector').change(function() {
         document.location = '${request.application_url}/group/${group.id}/event/' + $(this).val()
         return false;
+    });
+    
+    $('#show_hidden_frames').toggle(function () {
+        $('div.frame.hidden').toggle();
+        $(this).html('Hide Hidden Frames');
+    }, function () {
+        $(this).html('Show Hidden Frames');
+        $('div.frame.hidden').toggle();        
     });
 });
 </script>
@@ -72,8 +82,17 @@ $(document).ready(function() {
 </%def>
 <%def name="full_traceback(frames)">
 <div class="traceback-frames">
+<% 
+    visible = True
+    displayed = False
+%>
 % for frame in frames[::-1]:
-    <div class="frame">
+    <% visible = False if frame['vars'].get('__traceback_hide__') == 'before_and_this' else visible %>
+    % if not visible and not displayed:
+        <% displayed = True %>
+    <a id="show_hidden_frames" href="#">Show Hidden Frames</a>
+    % endif
+    <div class="frame ${'hidden' if not visible else ''}">
         <h4><cite class="module">${frame['module']}</cite>:
             <em class="line">${frame['lineno']}</em>,
             in <code class="function">${frame['function']}</code></h4>
