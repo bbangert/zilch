@@ -30,8 +30,10 @@
 ${parent.javascript()}
 <script>
 $(document).ready(function() {
-    $('section table tr').click(function() {
-        $(this).find('td a').click();
+    $('section table tr').click(function(event) {
+        event.stopPropagation();
+        document.location = $(this).find('td a').attr('href');
+        return false;
     });
 });
 </script>
