@@ -65,7 +65,10 @@ def make_webapp(database_uri, default_timezone=None):
     config = Configurator(root_factory=Root)
     RequestWithBabel._default_timezone = default_timezone
     config.set_request_factory(RequestWithBabel)
-    config.add_settings({'mako.directories': 'zilch:templates/'})
+    config.add_settings(
+        {'mako.directories': 'zilch:templates/'},
+        {'mako.default_filters': 'h'}
+    )
     config.add_static_view('stylesheets', 'zilch:static/stylesheets')
     config.add_static_view('images', 'zilch:static/images')
     config.add_static_view('javascripts', 'zilch:static/javascripts')
