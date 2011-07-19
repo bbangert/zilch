@@ -135,6 +135,7 @@ def capture(event_type, tags=None, data=None, date=None, time_spent=None,
     # Shorten lists/strings
     for k, v in data.items():
         if k in ['traceback', 'frames', 'versions']:
+            data[k] = transform(v)
             continue
         data[k] = shorten(v)
 
