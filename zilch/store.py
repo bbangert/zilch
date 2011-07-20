@@ -200,7 +200,7 @@ class Group(Base, HelperMixin):
     
     def all_tags(self):
         query = Session.query(Tag).join(Tag.events).join(Event.groups)
-        return query.filter(Group.id==self.id).group_by(Tag.id, Tag.name, Tag.value)
+        return query.filter(Group.id==self.id).group_by(Tag.id, Tag.name, Tag.value).all()
     
     def latest_events(self):
         query = Session.query(Event.event_id, Event.datetime).join(Event.groups)
@@ -219,7 +219,7 @@ class ExceptionCreator(object):
     @classmethod
     def create_from_message(cls, message, db_uri):
         data = message['data']
-        date = message['date']
+        date = datetime.datetime.strptime(message['date'], '%Y-%m-%dT%H:%M:%S.%f')
         level = int(data.get('level', 0))
         class_name = data.get('type')
         value = data.get('value', '')
@@ -248,8 +248,7 @@ class ExceptionCreator(object):
 
         if group.count == 0:
             group.count = 1
-            last_seen = datetime.datetime.strptime(date, '%Y-%m-%dT%H:%M:%S.%f')
-            group.score = int(math.log(1) * 600 + int(last_seen.strftime('%s')))
+            group.score = int(math.log(1) * 600 + int(date.strftime('%s')))
         elif db_uri.startswith('postgres'):
             group.score = text('log(count) * 600 + last_seen::abstime::int')
         elif db_uri.startswith('mysql'):

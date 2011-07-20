@@ -1,5 +1,5 @@
+# coding: utf-8
 import unittest
-from contextlib import contextmanager
 
 from nose.tools import eq_
 from mock import patch
@@ -7,16 +7,7 @@ from mock import Mock
 
 import zmq
 
-@contextmanager
-def client_recorder(host):
-    import zilch.client
-    prior = zilch.client.recorder_host
-    zilch.client.recorder_host = host
-    try:
-        yield
-    finally:
-        zilch.client.recorder_host = prior
-
+from zilch.tests.utils import client_recorder
 
 class TestSend(unittest.TestCase):
     def _makeOne(self):
@@ -56,7 +47,10 @@ class TestCapture(unittest.TestCase):
     def test_capture_exc(self):
         with patch('zilch.client.send') as mock_send:
             cap = self._makeOne()
+                        
             try:
+                # Add some unicode fun
+                uni = u"\u0644\u064a\u0647\u0645\u0627"
                 fred = smith['no_name']
             except:
                 cap()
