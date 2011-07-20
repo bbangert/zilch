@@ -28,6 +28,7 @@ import socket
 import sys
 import traceback
 import uuid
+from threading import local
 
 import zmq
 import simplejson
@@ -43,7 +44,7 @@ from zilch.utils import transform
 
 
 recorder_host = None
-_zeromq_socket = None
+_zeromq_socket = local()
 capture_tags = []
 
 
@@ -53,16 +54,15 @@ def get_socket():
     Caches the ZeroMQ socket on the module.
 
     """
-    global _zeromq_socket
     if not recorder_host:
         raise ConfigurationError("Collector host string not configured.")
     
-    if not _zeromq_socket:
+    if not hasattr(_zeromq_socket, 'sock'):
         context = zmq.Context()
         zero_socket = context.socket(zmq.PUSH)
         zero_socket.connect(recorder_host)
-        _zeromq_socket = zero_socket
-    return _zeromq_socket
+        _zeromq_socket.sock = zero_socket
+    return _zeromq_socket.sock
 
 
 def send(**kwargs):
