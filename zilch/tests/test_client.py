@@ -21,7 +21,11 @@ class TestSend(unittest.TestCase):
             mock.return_value = mock_socket
             send = self._makeOne()
             with client_recorder('localhost'):
-                send(test='data')
+                send(
+                    test='data', 
+                    uni = u"\u0644\u064a\u0647\u0645\u0627",
+                    set_of_stuff = set(['a string', 'another string'])
+                )
             eq_(mock.call_count, 1)
             eq_(mock_socket.method_calls[0][0], 'send')
     
@@ -61,6 +65,7 @@ class TestCapture(unittest.TestCase):
             try:
                 # Add some unicode fun
                 uni = u"\u0644\u064a\u0647\u0645\u0627"
+                set_of_stuff = set(['a string', 'another string'])
                 fred = smith['no_name']
             except:
                 cap()

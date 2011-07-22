@@ -47,12 +47,12 @@ try:
 except ImportError:
     pass
 
-import simplejson
 from weberror.collector import collect_exception
 from webob import Request
 from webob import Response
 
 from zilch.exc import ConfigurationError
+from zilch.utils import dumps
 from zilch.utils import lookup_versions
 from zilch.utils import shorten
 from zilch.utils import transform
@@ -91,7 +91,7 @@ def send(**kwargs):
 
     """
     if recorder_host:
-        data = simplejson.dumps(kwargs).encode('zlib')
+        data = dumps(kwargs).encode('zlib')
         get_socket().send(data, flags=zmq.NOBLOCK)
     elif store:
         store.message_received(kwargs)

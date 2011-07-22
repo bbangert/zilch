@@ -2,12 +2,12 @@
 import time
 import signal
 
-import simplejson
 try:
     import zmq
 except:
     pass
 
+from zilch.utils import loads
 
 class Recorder(object):
     """ZeroMQ Recorder
@@ -37,7 +37,7 @@ class Recorder(object):
         while messages:
             try:
                 message = self.sock.recv(flags=zmq.NOBLOCK)
-                data = simplejson.loads(message.decode('zlib'))
+                data = loads(message.decode('zlib'))
                 self.store.message_received(data)
                 message_count += 1
             except zmq.ZMQError, e:
@@ -69,7 +69,7 @@ class Recorder(object):
         while 1:
             try:
                 message = self.sock.recv(flags=zmq.NOBLOCK)
-                data = simplejson.loads(message.decode('zlib'))
+                data = loads(message.decode('zlib'))
                 self.store.message_received(data)
                 messages = True
             except zmq.ZMQError, e:

@@ -5,9 +5,43 @@ import types
 import uuid
 from decimal import Decimal
 
+import simplejson
+from simplejson import JSONEncoder
+from sqlalchemy.engine.base import ResultProxy, RowProxy
 from weberror.collector import collect_exception
 
 import pkg_resources
+
+# JSON Encoder class
+class BetterJSONEncoder(JSONEncoder):
+    def default(self, obj):
+        if hasattr(obj, '__json__') and callable(obj.__json__):
+            return obj.__json__()
+        elif isinstance(obj, (datetime.date, datetime.datetime)):
+            return str(obj)
+        elif isinstance(obj, Decimal):
+            return float(obj)
+        elif isinstance(obj, (set, frozenset)):
+            return list(obj)
+        elif isinstance(obj, ResultProxy):
+            return dict(rows=list(obj), count=obj.rowcount)
+        elif isinstance(obj, RowProxy):
+            return dict(rows=dict(obj), count=1)
+        else:
+            return super(BetterJSONEncoder, self).default(obj)
+
+
+def better_decoder(data):
+    return data
+
+
+def dumps(value, **kwargs):
+    return simplejson.dumps(value, cls=BetterJSONEncoder, **kwargs)
+
+
+def loads(value, **kwargs):
+    return simplejson.loads(value, object_hook=better_decoder)
+
 
 def lookup_versions(module_list, include_deps=False):
     """Given a list of modules, look up their versions and return
@@ -218,3 +252,4 @@ def shorten(var):
         # TODO: when we finish the above, we should also implement this for dicts
         var = list(var)[:MAX_LENGTH_LIST] + ['...', '(%d more elements)' % (len(var) - MAX_LENGTH_LIST,)]
     return var
+
