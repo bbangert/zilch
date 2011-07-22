@@ -24,10 +24,9 @@ setup(name='zilch',
       packages=find_packages(),
       include_package_data=True,
       zip_safe=False,
-      tests_require = ['pkginfo', 'Mock>=0.7', 'nose'],
+      tests_require = ['pkginfo', 'Mock>=0.7', 'nose', 'SQLAlchemy>=0.7'],
       install_requires=[
-          "pyzmq>=2.1",
-          "simplejson>=2.1",
+          "simplejson>=2.1", "weberror>=0.10.3",
       ],
       entry_points="""
       [console_scripts]

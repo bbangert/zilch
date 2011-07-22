@@ -26,8 +26,6 @@ from sqlalchemy.types import Text
 from sqlalchemy.types import TypeDecorator
 
 
-from zilch.utils import construct_checksum
-
 log = logging.getLogger(__name__)
 
 Base = declarative_base()
@@ -226,13 +224,8 @@ class ExceptionCreator(object):
 
         traceback = data.pop('traceback', None)
 
-        hash = construct_checksum(
-            level=level,
-            traceback=traceback,
-            class_name=class_name,
-            message=value,
-        )
-        group_message = '%s: %s' % (class_name, value)
+        hash = message['hash']
+        group_message = data['message']
 
         event_type = EventType.get_or_create(name=message['event_type'])
         tags = [Tag.get_or_create(name=x, value=y) for x,y in message.get('tags', [])]

@@ -8,6 +8,7 @@ from mock import Mock
 import zmq
 
 from zilch.tests.utils import client_recorder
+from zilch.tests.utils import client_store
 
 class TestSend(unittest.TestCase):
     def _makeOne(self):
@@ -19,9 +20,18 @@ class TestSend(unittest.TestCase):
             mock_socket = Mock()
             mock.return_value = mock_socket
             send = self._makeOne()
-            send(test='data')
+            with client_recorder('localhost'):
+                send(test='data')
             eq_(mock.call_count, 1)
             eq_(mock_socket.method_calls[0][0], 'send')
+    
+    def test_send_with_store(self):
+        mock_store = Mock()
+        send = self._makeOne()
+        with client_store(mock_store):
+            send(test='data')
+        eq_(mock_store.method_calls[0][0], 'message_received')
+
 
 class TestGetSocket(unittest.TestCase):
     def _makeOne(self):

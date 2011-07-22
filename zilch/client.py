@@ -1,10 +1,22 @@
-"""ZeroMQ Client
+"""Zilch Recording Client
 
-Before reporting exceptions or using the zilch Logger, the connection
-string for ZeroMQ that refers to the recorder_host should be configured::
-    
-    import zilch.client
-    zilch.client.recorder_host = "tcp://localhost:5555"
+Two main methods are exposed for reporting exceptions,
+:func:`~zilch.client.capture_exception` and :func:`~zilch.client.capture`.
+
+The manner of reporting the exception varies depending on the configuration.
+There's two options available to report the data:
+
+* ZeroMQ based transport to a central recorder
+* Direct storage via a ``Store`` object
+
+Zilch comes with an `SQLAlchemy <http://sqlalchemy.org/>`_ ``Store`` to stash
+captured data in a relational database.
+
+Before reporting exceptions or using the zilch Logger, the
+connection string for ZeroMQ that refers to the recorder_host should be
+configured::
+
+ import zilch.client zilch.client.recorder_host = "tcp://localhost:5555"
 
 Exceptions can then be reported with capture_exception function::
     
@@ -30,19 +42,24 @@ import traceback
 import uuid
 from threading import local
 
-import zmq
+try:
+    import zmq
+except ImportError:
+    pass
+
 import simplejson
+from weberror.collector import collect_exception
 from webob import Request
 from webob import Response
 
 from zilch.exc import ConfigurationError
-from zilch.utils import construct_checksum
-from zilch.utils import get_traceback_frames
 from zilch.utils import lookup_versions
 from zilch.utils import shorten
 from zilch.utils import transform
+from zilch.utils import update_frame_visibility
 
 
+store = None
 recorder_host = None
 _zeromq_socket = local()
 capture_tags = []
@@ -55,7 +72,7 @@ def get_socket():
 
     """
     if not recorder_host:
-        raise ConfigurationError("Collector host string not configured.")
+        raise ConfigurationError("Recorder host string not configured.")
     
     if not hasattr(_zeromq_socket, 'sock'):
         context = zmq.Context()
@@ -66,47 +83,74 @@ def get_socket():
 
 
 def send(**kwargs):
-    """Send a message over ZeroMQ"""
-    data = simplejson.dumps(kwargs).encode('zlib')
-    get_socket().send(data, flags=zmq.NOBLOCK)
+    """Send a message to the recorder
+    
+    If there is no recorder_host and ``zilch.client.store`` is not
+    None, then it is assumed to be a valid Storage backend and will
+    immediately recieve the message and be flushed.
+
+    """
+    if recorder_host:
+        data = simplejson.dumps(kwargs).encode('zlib')
+        get_socket().send(data, flags=zmq.NOBLOCK)
+    elif store:
+        store.message_received(kwargs)
+        store.flush()
+    else:
+        raise ConfigurationError("No Record host or Store configured.")
 
 
 def capture_exception(event_type="Exception", exc_info=None, 
                       level=logging.ERROR, tags=None, extra=None):
     """Capture the current exception"""
     exc_info = exc_info or sys.exc_info()
-    exc_type, exc_value, exc_traceback = exc_info
-    
-    if exc_type and not isinstance(exc_type, str):
-        exception_type = exc_type.__name__
-        if exc_type.__module__ not in ('__builtin__', 'exceptions'):
-            exception_type = exc_type.__module__ + '.' + exception_type
-    else:
-        exception_type = exc_type
-
-    tb_message = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
+    collected = collect_exception(*exc_info)
 
     # Check to see if this hash has been reported past the threshold
     # TODO: Use this in the future
-    # hash = construct_checksum(
-    #     level=level,
-    #     class_name=exception_type,
-    #     traceback=tb_message,
-    #     message=transform(exc_value),
-    # )
     # cur_sec = int(time.time())
     # capture_key = '%s %s' % (hash, cur_sec)
     
+    frames = []
+    frame_hash = {}
+    update_frame_visibility(collected.frames)
+    for frame in collected.frames:
+        fdata = {
+            'id': frame.tbid,
+            'filename': frame.filename,
+            'module': frame.modname or '?',
+            'function': frame.name or '?',
+            'lineno': frame.lineno,
+            'vars': {},
+            'context_line': frame.get_source_line(),
+            'with_context': frame.get_source_line(context=5),
+            'visible': frame.visible,
+        }
+        frame_hash[frame.tbid] = fdata
+        frames.append(fdata)
+    
+    tb = exc_info[2]
+    while tb is not None:
+        if tb.tb_frame.f_locals.get('__exception_formatter__'):
+            # Stop recursion. @@: should make a fake ExceptionFrame
+            break
+        tbid = id(tb)
+        if tbid in frame_hash:
+            frame_hash[tbid]['vars'] = tb.tb_frame.f_locals
+        tb = tb.tb_next
+
     data = {
-        'value': transform(exc_value),
-        'type': exception_type,
+        'value': transform(collected.exception_value),
+        'type': collected.exception_type,
+        'message': ''.join(collected.exception_formatted),
         'level': level,
-        'frames': get_traceback_frames(exc_traceback),
-        'traceback': tb_message,
+        'frames': frames,
+        'traceback': ''.join(traceback.format_exception(*exc_info)),
     }
     modules = [frame['module'] for frame in data['frames']]
     data['versions'] = lookup_versions(modules)
-    return capture(event_type, tags=tags, data=data, extra=extra)
+    return capture(event_type, tags=tags, data=data, extra=extra,
+                   hash=collected.identification_code)
 
 
 def capture(event_type, tags=None, data=None, date=None, time_spent=None,

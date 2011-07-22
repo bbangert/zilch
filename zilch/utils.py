@@ -1,15 +1,13 @@
 """Reporting/Collector Utility functions"""
 import datetime
-import hashlib
 import logging
 import types
 import uuid
-import re
 from decimal import Decimal
 
-import pkg_resources
+from weberror.collector import collect_exception
 
-NUKE_LINE_NO = re.compile(r', line \d+', re.M)
+import pkg_resources
 
 def lookup_versions(module_list, include_deps=False):
     """Given a list of modules, look up their versions and return
@@ -42,92 +40,6 @@ def lookup_versions(module_list, include_deps=False):
                     break
                 library_name = '.'.join(library_name.split('.')[:-1])
     return libs
-
-
-def construct_checksum(level=logging.ERROR, class_name='', traceback='', message='', **kwargs):
-    checksum = hashlib.md5(str(level))
-    checksum.update(class_name or '')
-    if traceback:
-        lines = map(lambda x: re.sub(NUKE_LINE_NO, '', x), traceback.split('\n'))
-        traceback = '\n'.join(lines[:-3])
-    message = traceback or message
-    if isinstance(message, unicode):
-        message = message.encode('utf-8', 'replace')
-    checksum.update(message)
-    return checksum.hexdigest()
-
-
-def iter_tb(tb):
-    while tb:
-        yield tb
-        tb = tb.tb_next
-
-
-def _get_lines_from_file(filename, lineno, context_lines, loader=None, module_name=None):
-    """
-    Returns context_lines before and after lineno from file.
-    Returns (pre_context_lineno, pre_context, context_line, post_context).
-    """
-    source = None
-    if loader is not None and hasattr(loader, "get_source"):
-        source = loader.get_source(module_name)
-        if source is not None:
-            source = source.splitlines()
-    if source is None:
-        try:
-            f = open(filename)
-            try:
-                source = f.readlines()
-            finally:
-                f.close()
-        except (OSError, IOError):
-            pass
-    if source is None:
-        return None, [], None, []
-
-    encoding = 'ascii'
-    for line in source[:2]:
-        # File coding may be specified. Match pattern from PEP-263
-        # (http://www.python.org/dev/peps/pep-0263/)
-        match = re.search(r'coding[:=]\s*([-\w.]+)', line)
-        if match:
-            encoding = match.group(1)
-            break
-    source = [unicode(sline, encoding, 'replace') for sline in source]
-
-    lower_bound = max(0, lineno - context_lines)
-    upper_bound = lineno + context_lines
-
-    pre_context = [line.strip('\n') for line in source[lower_bound:lineno]]
-    context_line = source[lineno].strip('\n')
-    post_context = [line.strip('\n') for line in source[lineno+1:upper_bound]]
-
-    return lower_bound, pre_context, context_line, post_context
-
-
-def get_traceback_frames(tb):
-    frames = []
-    for tb in iter_tb(tb):
-        filename = tb.tb_frame.f_code.co_filename
-        function = tb.tb_frame.f_code.co_name
-        lineno = tb.tb_lineno - 1
-        loader = tb.tb_frame.f_globals.get('__loader__')
-        module_name = tb.tb_frame.f_globals.get('__name__')
-        pre_context_lineno, pre_context, context_line, post_context = _get_lines_from_file(filename, lineno, 7, loader, module_name)
-        frames.append({
-            'id': id(tb),
-            'filename': filename,
-            'module': module_name,
-            'function': function,
-            'lineno': lineno + 1,
-            # TODO: vars need to be references
-            'vars': tb.tb_frame.f_locals,
-            'pre_context': pre_context,
-            'context_line': context_line,
-            'post_context': post_context,
-            'pre_context_lineno': pre_context_lineno + 1,
-        })
-    return frames
 
 
 def transform(value, stack=[], context=None):
@@ -197,6 +109,50 @@ def is_protected_type(obj):
         datetime.datetime, datetime.date, datetime.time,
         float, Decimal)
     )
+
+
+def update_frame_visibility(frames):
+    """Attaches data to the frames indicating visibility"""
+    frame_hash = {}
+    new_frames = []
+    hidden = False
+    for frame in frames:
+        frame_hash[id(frame)] = frame
+        frame.visible = False
+        hide = frame.traceback_hide
+        # @@: It would be nice to signal a warning if an unknown
+        # hide string was used, but I'm not sure where to put
+        # that warning.
+        if hide == 'before':
+            new_frames = []
+            hidden = False
+        elif hide == 'before_and_this':
+            new_frames = []
+            hidden = False
+            continue
+        elif hide == 'reset':
+            hidden = False
+        elif hide == 'reset_and_this':
+            hidden = False
+            continue
+        elif hide == 'after':
+            hidden = True
+        elif hide == 'after_and_this':
+            hidden = True
+            continue
+        elif hide:
+            continue
+        elif hidden:
+            continue
+        new_frames.append(frame)
+    if frames[-1] not in new_frames:
+        # We must include the last frame; that we don't indicates
+        # that the error happened where something was "hidden",
+        # so we just have to show everything
+        return None
+    for frame in new_frames:
+        frame_hash[id(frame)].visible = True
+    return None
 
 
 def force_unicode(s, encoding='utf-8', strings_only=False, errors='strict'):

@@ -84,28 +84,27 @@ $(document).ready(function() {
 <div class="traceback-frames">
 <% 
     visible = True
-    displayed = False
 %>
 % for frame in frames[::-1]:
-    <% visible = False if frame['vars'].get('__traceback_hide__') == 'before_and_this' else visible %>
-    % if not visible and not displayed:
-        <% displayed = True %>
-    <a id="show_hidden_frames" href="#">Show Hidden Frames</a>
-    % endif
-    <div class="frame ${'hidden' if not visible else ''}">
+    <% visible = False if not frame['visible'] else visible %>
+    <div class="frame ${'hidden' if not frame['visible'] else ''}">
         <h4><cite class="module">${frame['module']}</cite>:
             <em class="line">${frame['lineno']}</em>,
             in <code class="function">${frame['function']}</code></h4>
         <div class="context">
-            <pre class="around">${'\n'.join(frame.get('pre_context', [])[-3:])}</pre>
+            <pre class="around">${'\n'.join(frame.get('with_context', '').split('\n')[:5][-3:])}</pre>
             <pre class="context_line">${frame.get('context_line')}</pre>
-            <pre class="around">${'\n'.join(frame.get('post_context', [])[:-3])}</pre>
+            <pre class="around">${'\n'.join(frame.get('with_context', '').split('\n')[-5:][:3])}</pre>
         </div>
         <div class="localvars">
             ${display_table('Local Variables', ('Variable', 'Value'), frame['vars'], 4)}
         </div>
     </div>
 % endfor
+% if not visible and not displayed:
+    <% displayed = True %>
+<a id="show_hidden_frames" href="#">Show Hidden Frames</a>
+% endif
 </div>
 </%def>
 <%def name="display_table(header_name, table_header, table_dict, header_type='3')">

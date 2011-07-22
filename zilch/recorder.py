@@ -3,7 +3,10 @@ import time
 import signal
 
 import simplejson
-import zmq
+try:
+    import zmq
+except:
+    pass
 
 
 class Recorder(object):
