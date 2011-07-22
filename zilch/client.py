@@ -112,7 +112,6 @@ def capture_exception(event_type="Exception", exc_info=None,
     # capture_key = '%s %s' % (hash, cur_sec)
     
     frames = []
-    frame_hash = {}
     update_frame_visibility(collected.frames)
     for frame in collected.frames:
         fdata = {
@@ -121,24 +120,13 @@ def capture_exception(event_type="Exception", exc_info=None,
             'module': frame.modname or '?',
             'function': frame.name or '?',
             'lineno': frame.lineno,
-            'vars': {},
+            'vars': frame.locals,
             'context_line': frame.get_source_line(),
             'with_context': frame.get_source_line(context=5),
             'visible': frame.visible,
         }
-        frame_hash[frame.tbid] = fdata
         frames.append(fdata)
     
-    tb = exc_info[2]
-    while tb is not None:
-        if tb.tb_frame.f_locals.get('__exception_formatter__'):
-            # Stop recursion. @@: should make a fake ExceptionFrame
-            break
-        tbid = id(tb)
-        if tbid in frame_hash:
-            frame_hash[tbid]['vars'] = tb.tb_frame.f_locals
-        tb = tb.tb_next
-
     data = {
         'value': transform(collected.exception_value),
         'type': collected.exception_type,

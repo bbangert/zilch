@@ -83,11 +83,13 @@ $(document).ready(function() {
 <%def name="full_traceback(frames)">
 <div class="traceback-frames">
 <% 
-    visible = True
+    visible = len(filter(lambda x: x['visible'] == 'False', frames)) == 0
 %>
+% if not visible:
+<a id="show_hidden_frames" href="#">Show Hidden Frames</a>
+% endif
 % for frame in frames[::-1]:
-    <% visible = False if not frame['visible'] else visible %>
-    <div class="frame ${'hidden' if not frame['visible'] else ''}">
+    <div class="frame ${'hidden' if frame['visible'] == 'False' else ''}">
         <h4><cite class="module">${frame['module']}</cite>:
             <em class="line">${frame['lineno']}</em>,
             in <code class="function">${frame['function']}</code></h4>
@@ -101,10 +103,6 @@ $(document).ready(function() {
         </div>
     </div>
 % endfor
-% if not visible and not displayed:
-    <% displayed = True %>
-<a id="show_hidden_frames" href="#">Show Hidden Frames</a>
-% endif
 </div>
 </%def>
 <%def name="display_table(header_name, table_header, table_dict, header_type='3')">
