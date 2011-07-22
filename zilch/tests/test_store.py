@@ -14,10 +14,6 @@ class TestStore(unittest.TestCase):
         from zilch.client import capture_exception
         return capture_exception
     
-    def _setupDB(self):
-        from zilch.store import init_db
-        init_db('sqlite://')
-    
     def _makeSession(self):
         from zilch.store import Session
         return Session
@@ -41,16 +37,17 @@ class TestEventRecord(TestStore):
             except:
                 cap()
             kwargs = mock_send.call_args[1]
-            
+        
+        try:
             # For the simplejson serialization that happens
             jsonified = simplejson.loads(simplejson.dumps(kwargs))
             store.message_received(jsonified)
             store.flush()
-            
+        
             Session = self._makeSession()
             Group = self._makeGroup()
             group = Session.query(Group).all()[0]
-            
+        
             eq_(len(group.latest_events()), 1)
             tags = group.all_tags()
             eq_(len(tags), 1)
@@ -60,4 +57,5 @@ class TestEventRecord(TestStore):
             last_frame = last_event.data['frames'][-1]
             eq_(last_frame['function'], 'testStoreException')
             eq_(last_frame['module'], 'zilch.tests.test_store')
-        
+        finally:
+            Session.remove()
