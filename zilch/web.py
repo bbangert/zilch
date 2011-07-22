@@ -49,7 +49,7 @@ def group_details(context, request):
             'event_type': event_type}
 
 
-class RequestWithBabel(Request):
+class RequestWithTimezone(Request):
     _default_timezone = ''
     
     @reify
@@ -63,8 +63,8 @@ class RequestWithBabel(Request):
 def make_webapp(database_uri, default_timezone=None):
     init_db(database_uri)
     config = Configurator(root_factory=Root)
-    RequestWithBabel._default_timezone = default_timezone
-    config.set_request_factory(RequestWithBabel)
+    RequestWithTimezone._default_timezone = default_timezone
+    config.set_request_factory(RequestWithTimezone)
     config.add_settings(
         {'mako.directories': 'zilch:templates/',
         'mako.default_filters': 'h'},
