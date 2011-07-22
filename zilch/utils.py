@@ -17,7 +17,9 @@ class BetterJSONEncoder(JSONEncoder):
     def default(self, obj):
         if hasattr(obj, '__json__') and callable(obj.__json__):
             return obj.__json__()
-        elif isinstance(obj, (datetime.date, datetime.datetime)):
+        elif isinstance(obj, datetime.datetime):
+            return obj.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+        elif isinstance(obj, datetime.date):
             return str(obj)
         elif isinstance(obj, Decimal):
             return float(obj)
