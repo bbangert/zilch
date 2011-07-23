@@ -8,8 +8,6 @@ This library is inspired by (and uses several of the same functions from)
 implement just the core features in a smaller code/feature footprint.
 
 
-`ZeroMQ <zeromq.org>`_
-
 Requirements
 ============
 
