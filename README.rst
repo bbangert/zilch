@@ -4,21 +4,22 @@ zilch
 
 ``zilch`` is a small library for recording and viewing exceptions from Python.
 This library is inspired by (and uses several of the same functions from)
-`David Cramer's Sentry <https://github.com/dcramer/sentry>`_, but aims to
-implement just the core features in a smaller code/feature footprint.
+David Cramer's Sentry_, but aims to implement just the core features in a
+smaller code/feature footprint.
 
 
 Requirements
 ============
 
-* ``simplejson``
-* ``weberror``
+* simplejson_
+* WebError_
 
 Optional
 --------
 
-* `zeromq <http://zeromq.org>`_ (For network based reporting)
-* `sqlalchemy <http://sqlalchemy.org/>`_ (For the database backend recorder)
+* ZeroMQ_ (For network based reporting)
+* SQLAlchemy_ (For the database backend recorder)
+* Pyramid_ and WebHelpers_ (For the recorder web UI)
 
 
 Basic Usage
@@ -51,9 +52,9 @@ Advanced Usage
 ==============
 
 In larger cluster scenarios, or where latency is important, the reporting of
-the exception can be handed off to `zeromq <http://zeromq.org>`_ to be
-recorded to a central recorder over the network. Both the client and recording
-machine must have `zeromq <http://zeromq.org>`_ installed.
+the exception can be handed off to ZeroMQ_ to be recorded to a central
+recorder over the network. Both the client and recording machine must have
+ZeroMQ_ installed.
 
 To setup the client for recording::
 
@@ -77,13 +78,12 @@ The exception will then be sent to the recorder_host listening at the
 Recording Exceptions Centrally
 ==============================
 
-The recorder uses `zeromq <http://zeromq.org>`_ to record exception reports
-delivered over the network. To run the recorder host, on the machine recording
-them run::
+The recorder uses ZeroMQ_ to record exception reports delivered over the
+network. To run the recorder host, on the machine recording them run::
 
     >> zilch-recorder tcp://localhost:5555 sqlite:///exceptions.db
 
-Without a ``Recorder`` running, ZeroMQ will hold onto the messages until it
+Without a ``Recorder`` running, ZeroMQ_ will hold onto the messages until it
 is available. After which point, it will begin to block (In the future, an
 option will be added to configure the disk offloading of messages).
 
@@ -93,12 +93,11 @@ The recorder will create the tables necessary on its initial launch.
 Viewing Recorded Exceptions
 ===========================
 
-``zilch`` comes with a `pyramid
-<http://docs.pylonsproject.org/docs/pyramid.html>`_ web application to view
-the database of recorded exceptions. Once you have installed Pyramid, you can
+``zilch`` comes with a Pyramid_ web application to view the database of
+recorded exceptions. Once you have installed Pyramid_ and WebHelpers_, you can
 run the web interface by typing::
-    
-    >> zilch-web sqlite:///exceptions.db
+
+ >> zilch-web sqlite:///exceptions.db
 
 Additional web configuration parameters are available to designate the
 host/port that the web application should bind to (viewable by running
@@ -115,3 +114,12 @@ Authors
 =======
 
 ``zilch`` is made available by `Ben Bangert`.
+
+
+.. _Pyramid: http://docs.pylonsproject.org/docs/pyramid.html
+.. _ZeroMQ: http://zeromq.org
+.. _Sentry: https://github.com/dcramer/sentry
+.. _simplejson: http://simplejson.github.com/simplejson/
+.. _WebError: http://pypi.python.org/pypi/WebError
+.. _SQLAlchemy: http://sqlalchemy.org
+.. _WebHelpers: http://sluggo.scrapping.cc/python/WebHelpers/index.html
