@@ -1,7 +1,6 @@
 """SQLAlchemy Storage Backend"""
 import base64
 import datetime
-import hashlib
 import math
 import logging
 
@@ -13,8 +12,6 @@ from sqlalchemy import ForeignKey
 from sqlalchemy import Index
 from sqlalchemy import Table
 from sqlalchemy import text
-from sqlalchemy import func
-from sqlalchemy import UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session
 from sqlalchemy.orm import sessionmaker

@@ -48,8 +48,6 @@ except ImportError:
     pass
 
 from weberror.collector import collect_exception
-from webob import Request
-from webob import Response
 
 from zilch.exc import ConfigurationError
 from zilch.utils import dumps
