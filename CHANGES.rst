@@ -2,8 +2,16 @@
 zilch
 =====
 
-0.1
-===
+0.1.1 (07/25/2011)
+
+Bug Fixes
+---------
+
+- Fix bug with webob imports in client.py
+
+
+0.1 (07/25/2011)
+================
 
 Features
 --------
