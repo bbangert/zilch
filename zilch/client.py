@@ -102,41 +102,48 @@ def capture_exception(event_type="Exception", exc_info=None,
                       level=logging.ERROR, tags=None, extra=None):
     """Capture the current exception"""
     exc_info = exc_info or sys.exc_info()
-    collected = collect_exception(*exc_info)
+    
+    # Ensure that no matter what happens, we always del the exc_info
+    try:
+        collected = collect_exception(*exc_info)
 
-    # Check to see if this hash has been reported past the threshold
-    # TODO: Use this in the future
-    # cur_sec = int(time.time())
-    # capture_key = '%s %s' % (hash, cur_sec)
+        # Check to see if this hash has been reported past the threshold
+        # TODO: Use this in the future
+        # cur_sec = int(time.time())
+        # capture_key = '%s %s' % (hash, cur_sec)
     
-    frames = []
-    update_frame_visibility(collected.frames)
-    for frame in collected.frames:
-        fdata = {
-            'id': frame.tbid,
-            'filename': frame.filename,
-            'module': frame.modname or '?',
-            'function': frame.name or '?',
-            'lineno': frame.lineno,
-            'vars': frame.locals,
-            'context_line': frame.get_source_line(),
-            'with_context': frame.get_source_line(context=5),
-            'visible': frame.visible,
+        frames = []
+        update_frame_visibility(collected.frames)
+        for frame in collected.frames:
+            fdata = {
+                'id': frame.tbid,
+                'filename': frame.filename,
+                'module': frame.modname or '?',
+                'function': frame.name or '?',
+                'lineno': frame.lineno,
+                'vars': frame.locals,
+                'context_line': frame.get_source_line(),
+                'with_context': frame.get_source_line(context=5),
+                'visible': frame.visible,
+            }
+            frames.append(fdata)
+    
+        data = {
+            'value': transform(collected.exception_value),
+            'type': collected.exception_type,
+            'message': ''.join(collected.exception_formatted),
+            'level': level,
+            'frames': frames,
+            'traceback': ''.join(traceback.format_exception(*exc_info)),
         }
-        frames.append(fdata)
-    
-    data = {
-        'value': transform(collected.exception_value),
-        'type': collected.exception_type,
-        'message': ''.join(collected.exception_formatted),
-        'level': level,
-        'frames': frames,
-        'traceback': ''.join(traceback.format_exception(*exc_info)),
-    }
-    modules = [frame['module'] for frame in data['frames']]
-    data['versions'] = lookup_versions(modules)
-    return capture(event_type, tags=tags, data=data, extra=extra,
-                   hash=collected.identification_code)
+        modules = [frame['module'] for frame in data['frames']]
+        data['versions'] = lookup_versions(modules)
+        return capture(event_type, tags=tags, data=data, extra=extra,
+                       hash=collected.identification_code)
+    finally:
+        del exc_info
+        if 'collected' in locals():
+            del collected
 
 
 def capture(event_type, tags=None, data=None, date=None, time_spent=None,
