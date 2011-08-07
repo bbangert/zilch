@@ -1,4 +1,4 @@
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 
 import os
 
@@ -10,7 +10,7 @@ CHANGES = open(os.path.join(here, 'CHANGES.rst')).read()
 
 setup(name='zilch',
       version=__version__,
-      description='ZeroMQ-based reporting and collector',
+      description='Error/Exception collector and reporter',
       long_description=README + '\n\n' +  CHANGES,
       classifiers=[
         "Intended Audience :: Developers",

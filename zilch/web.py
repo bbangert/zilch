@@ -6,6 +6,8 @@ Running the Zilch webapp requires Pyramid 1.0 or greater to be installed.
 import pytz
 from pyramid.config import Configurator
 from pyramid.decorator import reify
+from pyramid.events import NewRequest
+from pyramid.events import subscriber
 from pyramid.httpexceptions import HTTPFound
 from pyramid.request import Request
 from pyramid.response import Response
@@ -19,6 +21,10 @@ from zilch.store import DatabaseTable
 from zilch.store import Group
 from zilch.store import Tag
 from zilch.store import Root
+
+@subscriber(NewRequest)
+def session_cleanup(event):
+    event.request.add_finished_callback(lambda x: Session.remove())
 
 
 @view_config(context=Root)
