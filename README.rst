@@ -116,6 +116,22 @@ Authors
 ``zilch`` is made available by `Ben Bangert`.
 
 
+Support
+=======
+
+zilch is considered feature-complete as the project owner (Ben Bangert) has
+no additional functionality or development beyond bug fixes planned. Bugs can
+be filed on github, should be accompanied by a test case to retain current
+code coverage, and should be in a Pull request when ready to be accepted into
+the zilch code-base.
+
+For a more full-featured error collector, Sentry_ now has a stand-alone
+client that no longer requires Django called Raven_. This project was created
+before Raven_ was available, and the author now uses Raven_ rather than
+``zilch`` most of the time.
+
+
+.. _Raven: https://github.com/dcramer/raven
 .. _Pyramid: http://docs.pylonsproject.org/docs/pyramid.html
 .. _ZeroMQ: http://zeromq.org
 .. _Sentry: https://github.com/dcramer/sentry
