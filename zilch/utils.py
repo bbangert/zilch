@@ -103,7 +103,8 @@ def transform(value, stack=[], context=None):
     elif isinstance(value, datetime.date):
         ret = value.strftime('%Y-%m-%d')
     elif isinstance(value, dict):
-        ret = dict((transform_rec(k), transform_rec(v)) for k, v in value.iteritems())
+        ret = dict((k if isinstance(k, str) or isinstance(k, unicode) else repr(k),
+                    transform_rec(v)) for k, v in value.iteritems())
     elif isinstance(value, unicode):
         ret = to_unicode(value)
     elif isinstance(value, str):
