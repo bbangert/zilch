@@ -75,8 +75,8 @@ $(document).ready(function() {
     <div class="plain_traceback">
         <h2>Plaintext Traceback</h2>
         <pre>
-        ${event.data['traceback']}
-        </pre>
+${event.data['traceback'].strip()}
+</pre>
     </div>
 </section>
 </%def>
