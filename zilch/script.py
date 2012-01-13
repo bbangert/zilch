@@ -31,12 +31,17 @@ class ZilchWeb(object):
                           help="Hostname/IP to bind the webserver to")
         parser.add_option("--timezone", dest="timezone", default="US/Pacific",
                           help="Default timezone to format dates for")                          
+        parser.add_option("--prefix", dest="prefix",
+                          help="URL prefix")
         (options, args) = parser.parse_args()
         
         if len(args) < 1:
             sys.exit("Error: Failed to provide a database_uri")
         
         app = make_webapp(args[0], default_timezone=options.timezone)
+        if options.prefix:
+            from paste.deploy.config import PrefixMiddleware
+            app = PrefixMiddleware(app, prefix=options.prefix)
         return serve(app, host=options.hostname, port=options.port)
 
 

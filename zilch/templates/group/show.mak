@@ -75,8 +75,8 @@ $(document).ready(function() {
     <div class="plain_traceback">
         <h2>Plaintext Traceback</h2>
         <pre>
-        ${event.data['traceback']}
-        </pre>
+${event.data['traceback'].strip()}
+</pre>
     </div>
 </section>
 </%def>
@@ -96,7 +96,7 @@ $(document).ready(function() {
         <div class="context">
             <pre class="around">${'\n'.join(frame.get('with_context', '').split('\n')[:5][-3:])}</pre>
             <pre class="context_line">${frame.get('context_line')}</pre>
-            <pre class="around">${'\n'.join(frame.get('with_context', '').split('\n')[-5:][:3])}</pre>
+            <pre class="around">${'\n'.join(frame.get('with_context', '').split('\n')[6:][:3])}</pre>
         </div>
         <div class="localvars">
             ${display_table('Local Variables', ('Variable', 'Value'), frame['vars'], 4)}
