@@ -29,7 +29,7 @@ def session_cleanup(event):
 
 @view_config(context=Root)
 def home(request):
-    return HTTPFound(location='/group/')
+    return HTTPFound(location=request.application_url + '/group/')
 
 
 @view_config(context=DatabaseTable, path_info='/group/', renderer='/group/index.mak')
