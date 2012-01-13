@@ -2,6 +2,16 @@
 zilch
 =====
 
+0.1.3 (01/13/2012)
+==================
+
+Features
+--------
+
+- Applied pull request from Marius Gedminas to add prefix option support to the
+  error view webapp.
+
+
 0.1.2 (08/07/2011)
 ==================
 
